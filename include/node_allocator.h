@@ -10,7 +10,7 @@
 
 //———————————————————————————————————————————————————————————————————//
 
-enum NodeAllocatorStatus
+enum node_allocator_status_t
 {
     NODE_ALLOCATOR_SUCCESS = 0,
     NODE_ALLOCATOR_STRUCT_NULL_PTR_ERROR,
@@ -20,42 +20,34 @@ enum NodeAllocatorStatus
     NODE_ALLOCATOR_ARRAYS_CALLOC_ERROR,
 };
 
-//————————————————————————————————————————————————//
+//———————————————————————————————————————————————————————————————————//
 
-struct Node_t
-{
-    ArgType  arg_type;
-    uint64_t val;
+// struct node_allocator_t
+// {
+//     size_t   n_arrays;
+//     size_t   array_len;
+//     node_t** big_array;
+//
+//     int      free_place;
+// };
 
-    Node_t*  left;
-    Node_t*  right;
-};
+//———————————————————————————————————————————————————————————————————//
 
-struct NodeAllocator_t
-{
-    size_t   n_arrays;
-    size_t   n_nodes_in_array;
-    Node_t** big_array;
+node_allocator_status_t node_allocator_ctor(node_allocator_t* allocator,
+                                            size_t n_nodes_in_array);
 
-    int      free_place;
-};
+node_allocator_status_t node_allocator_dtor(node_allocator_t* allocator);
 
-//————————————————————————————————————————————————//
+//———————————————————————————————————————————————————————————————————//
 
-NodeAllocatorStatus NodeAllocatorCtor (NodeAllocator_t* node_allocator,
-                                       size_t           n_arrays,
-                                       size_t           n_nodes_in_array);
+node_t* node_ctor (node_allocator_t* node_allocator,
+                   arg_type_t        arg_type,
+                   val_t             val,
+                   num_t             (*calc_func)(num_t, num_t),
+                   node_t*           (*diff_func)(node_allocator_t*, node_t*, node_t*),
+                   node_t*           left,
+                   node_t*           right);
 
-NodeAllocatorStatus NodeAllocatorDtor (NodeAllocator_t* allocator);
-
-//------------------------------------------------//
-
-Node_t* NodeCtor (NodeAllocator_t* node_allocator,
-                  ArgType          arg_type,
-                  uint64_t         val,
-                  Node_t*          left,
-                  Node_t*          right);
-
-//————————————————————————————————————————————————//
+//———————————————————————————————————————————————————————————————————//
 
 #endif // NODE_ALLOCATOR_H__

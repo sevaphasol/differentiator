@@ -4,17 +4,18 @@
 
 //-------------------------------------------------------------------//
 
+#include "operations.h"
 #include "tree_dump.h"
 #include "node_allocator.h"
 #include "custom_assert.h"
 
 //———————————————————————————————————————————————————————————————————//
 
-static TreeDumpStatus RecursivelyMakeDotNode (Node_t* node, FILE* file, int* node_number);
+static tree_dump_status_t recursively_make_dot_node(node_t* node, FILE* file, int* node_number);
 
 //———————————————————————————————————————————————————————————————————//
 
-TreeDumpStatus Dump(Node_t* root, const char* file_name)
+tree_dump_status_t tree_dump(node_t* root, const char* file_name)
 {
     VERIFY(!root, return TREE_DUMP_STRUCT_NULL_PTR_ERROR);
 
@@ -40,7 +41,7 @@ TreeDumpStatus Dump(Node_t* root, const char* file_name)
     //-------------------------------------------------------------------//
 
     int node_number = 1;
-    RecursivelyMakeDotNode(root, dot_file, &node_number);
+    recursively_make_dot_node(root, dot_file, &node_number);
 
     fputs("}\n", dot_file);
     fclose(dot_file);
@@ -63,21 +64,64 @@ TreeDumpStatus Dump(Node_t* root, const char* file_name)
 
 //===================================================================//
 
-TreeDumpStatus RecursivelyMakeDotNode(Node_t* node, FILE* file, int* node_number)
+tree_dump_status_t recursively_make_dot_node(node_t* node, FILE* file, int* node_number)
 {
     ASSERT(node);
     ASSERT(file);
     ASSERT(node_number);
 
+    ////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////
+    ////////////////!!WARNING!COPYPAST!!////////////////
+    ////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////
+
     //-------------------------------------------------------------------//
 
-    fprintf(file, "elem%d["
-                  "shape=\"Mrecord\", "
-                  "label= \"{%d | %ld}\""
-                  "];\n",
-                  *node_number,
-                  node->arg_type,
-                  node->val);
+    switch(node->arg_type)
+    {
+        case NUM:
+        {
+            fprintf(file, "elem%d["
+                "shape=\"Mrecord\", "
+                "label= \"{%s | %lg}\""
+                "];\n",
+                *node_number,
+                "NUM",
+                node->val.num);
+            break;
+        }
+        case VAR:
+        {
+            fprintf(file, "elem%d["
+                "shape=\"Mrecord\", "
+                "label= \"{%s | %s}\""
+                "];\n",
+                *node_number,
+                "VAR",
+                "x");
+            break;
+        }
+        case OPR:
+        {
+            fprintf(file, "elem%d["
+                "shape=\"Mrecord\", "
+                "label= \"{%s | %s}\""
+                "];\n",
+                *node_number,
+                "OPR",
+                OperationsTable[node->val.opr].name);
+            break;
+        }
+        default:
+        {
+            break;
+        }
+    }
 
     //-------------------------------------------------------------------//
 
@@ -90,7 +134,7 @@ TreeDumpStatus RecursivelyMakeDotNode(Node_t* node, FILE* file, int* node_number
         fprintf(file, "elem%d->elem%d;",
                       head_node_number, left_node_number);
 
-        RecursivelyMakeDotNode(node->left, file, node_number);
+        recursively_make_dot_node(node->left, file, node_number);
     }
 
     if (node->right)
@@ -100,7 +144,7 @@ TreeDumpStatus RecursivelyMakeDotNode(Node_t* node, FILE* file, int* node_number
         fprintf(file, "elem%d->elem%d;",
                        head_node_number, right_node_number);
 
-        RecursivelyMakeDotNode(node->right, file, node_number);
+        recursively_make_dot_node(node->right, file, node_number);
     }
 
     //-------------------------------------------------------------------//

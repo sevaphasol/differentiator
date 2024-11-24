@@ -4,72 +4,39 @@
 
 #include "node_allocator.h"
 #include "custom_assert.h"
+#include "operations.h"
 
 //———————————————————————————————————————————————————————————————————//
 
-static NodeAllocatorStatus BigArrayRealloc (NodeAllocator_t* node_allocator);
-static NodeAllocatorStatus ArraysCalloc    (NodeAllocator_t* node_allocator);
+static node_allocator_status_t big_array_realloc (node_allocator_t* node_allocator);
+static node_allocator_status_t arrays_calloc     (node_allocator_t* node_allocator);
 
 //———————————————————————————————————————————————————————————————————//
 
-NodeAllocatorStatus NodeAllocatorCtor(NodeAllocator_t* node_allocator,
-                                      size_t           n_arrays,
-                                      size_t           n_nodes_in_array)
+node_allocator_status_t node_allocator_ctor(node_allocator_t* allocator,
+                                            size_t array_len)
 {
-    VERIFY(!node_allocator,
+    VERIFY(!allocator,
            return NODE_ALLOCATOR_STRUCT_NULL_PTR_ERROR);
 
     //-------------------------------------------------------------------//
 
-    node_allocator->n_arrays  = n_arrays;
-
-    node_allocator->big_array = (Node_t**) calloc(n_arrays, sizeof(Node_t**));
-    VERIFY(!node_allocator->big_array,
+    allocator->big_array = (node_t**) calloc(allocator->n_arrays, sizeof(node_t**));
+    VERIFY(!allocator->big_array,
            return NODE_ALLOCATORE_STD_CALLOC_ERROR);
 
     //-------------------------------------------------------------------//
 
-    node_allocator->n_nodes_in_array = n_nodes_in_array;
+    allocator->array_len = array_len;
 
-    for (int i = 0; i < n_arrays; i++)
-    {
-        node_allocator->big_array[i] = (Node_t*) calloc (n_nodes_in_array, sizeof(Node_t*));
-        VERIFY(!node_allocator->big_array[i],
-               return NODE_ALLOCATORE_STD_CALLOC_ERROR);
-    }
+    allocator->n_arrays  = 1;
+    allocator->big_array[0] = (node_t*) calloc(array_len, sizeof(node_t*));
+    VERIFY(!allocator->big_array[0],
+            return NODE_ALLOCATORE_STD_CALLOC_ERROR);
 
     //-------------------------------------------------------------------//
 
-    node_allocator->free_place = 0;
-
-    //-------------------------------------------------------------------//
-
-    return NODE_ALLOCATOR_SUCCESS;
-}
-
-//===================================================================//
-
-NodeAllocatorStatus NodeAllocatorDtor(NodeAllocator_t* node_allocator)
-{
-    VERIFY(!node_allocator,
-           return NODE_ALLOCATOR_STRUCT_NULL_PTR_ERROR);
-
-    //-------------------------------------------------------------------//
-
-    for (int i = 0; i < node_allocator->n_arrays; i++)
-    {
-        free(node_allocator->big_array[i]);
-    }
-
-    //-------------------------------------------------------------------//
-
-    free(node_allocator->big_array);
-
-    //-------------------------------------------------------------------//
-
-    node_allocator->free_place       = 0;
-    node_allocator->n_arrays         = 0;
-    node_allocator->n_nodes_in_array = 0;
+    allocator->free_place = 0;
 
     //-------------------------------------------------------------------//
 
@@ -78,30 +45,60 @@ NodeAllocatorStatus NodeAllocatorDtor(NodeAllocator_t* node_allocator)
 
 //===================================================================//
 
-Node_t* NodeCtor(NodeAllocator_t* node_allocator,
-                 ArgType          arg_type,
-                 uint64_t         val,
-                 Node_t*          left,
-                 Node_t*          right)
+node_allocator_status_t node_allocator_dtor(node_allocator_t* allocator)
 {
-    VERIFY(!node_allocator, return nullptr);
+    VERIFY(!allocator, return NODE_ALLOCATOR_STRUCT_NULL_PTR_ERROR);
 
     //-------------------------------------------------------------------//
 
-    if (node_allocator->free_place >= node_allocator->n_arrays * node_allocator->n_nodes_in_array)
+    for (int i = 0; i < allocator->n_arrays; i++)
     {
-        VERIFY(BigArrayRealloc(node_allocator), return nullptr);
-        VERIFY(ArraysCalloc   (node_allocator), return nullptr);
+        free(allocator->big_array[i]);
     }
 
     //-------------------------------------------------------------------//
 
-    size_t cur_array      = node_allocator->free_place / node_allocator->n_nodes_in_array;
-    size_t rel_free_place = node_allocator->free_place % node_allocator->n_nodes_in_array;
+    free(allocator->big_array);
 
-    Node_t* new_node = &node_allocator->big_array[cur_array][rel_free_place];
+    //-------------------------------------------------------------------//
 
-    node_allocator->free_place++;
+    allocator->free_place = 0;
+    allocator->n_arrays   = 0;
+    allocator->array_len  = 0;
+
+    //-------------------------------------------------------------------//
+
+    return NODE_ALLOCATOR_SUCCESS;
+}
+
+//===================================================================//
+
+node_t* node_ctor(node_allocator_t* allocator,
+                  arg_type_t        arg_type,
+                  val_t             val,
+                  num_t             (*calc_func)(num_t, num_t),
+                  node_t*           (*diff_func)(node_allocator_t*, node_t*, node_t*),
+                  node_t*           left,
+                  node_t*           right)
+{
+    VERIFY(!allocator, return nullptr);
+
+    //-------------------------------------------------------------------//
+
+    if (allocator->free_place >= allocator->n_arrays * allocator->array_len)
+    {
+        VERIFY(big_array_realloc(allocator), return nullptr);
+        VERIFY(arrays_calloc    (allocator), return nullptr);
+    }
+
+    //-------------------------------------------------------------------//
+
+    size_t cur_array      = allocator->free_place / allocator->array_len;
+    size_t rel_free_place = allocator->free_place % allocator->array_len;
+
+    node_t* new_node = &allocator->big_array[cur_array][rel_free_place];
+
+    allocator->free_place++;
 
     //-------------------------------------------------------------------//
 
@@ -112,19 +109,48 @@ Node_t* NodeCtor(NodeAllocator_t* node_allocator,
 
     //-------------------------------------------------------------------//
 
+    switch (arg_type)
+    {
+        case NUM:
+        {
+            new_node->calc_func = nullptr;
+            new_node->diff_func = &diff_const;
+            break;
+        }
+        case VAR:
+        {
+            new_node->calc_func = nullptr;
+            new_node->diff_func = &diff_var;
+            break;
+        }
+        case OPR:
+        {
+            new_node->calc_func = OperationsTable[val.opr].calc_func;
+            new_node->diff_func = OperationsTable[val.opr].diff_func;
+            break;
+        }
+        default:
+        {
+            ASSERT(0);
+            break;
+        }
+    }
+
+    //-------------------------------------------------------------------//
+
     return new_node;
 }
 
 //===================================================================//
 
-NodeAllocatorStatus BigArrayRealloc(NodeAllocator_t* node_allocator)
+node_allocator_status_t big_array_realloc(node_allocator_t* allocator)
 {
     return NODE_ALLOCATOR_SUCCESS;
 }
 
 //===================================================================//
 
-NodeAllocatorStatus ArraysCalloc(NodeAllocator_t* node_allocator)
+node_allocator_status_t arrays_calloc(node_allocator_t* allocator)
 {
     return NODE_ALLOCATOR_SUCCESS;
 }
