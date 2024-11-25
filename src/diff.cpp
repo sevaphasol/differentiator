@@ -60,3 +60,10 @@ node_t* diff_tree(node_allocator_t* node_allocator, node_t* root)
 }
 
 //———————————————————————————————————————————————————————————————————//
+
+node_t* copy_tree(node_t* root)
+{
+    return root;
+}
+
+//———————————————————————————————————————————————————————————————————//

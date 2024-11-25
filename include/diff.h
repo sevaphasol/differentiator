@@ -37,30 +37,30 @@ const size_t nOperations = 24;
 
 enum opr_t
 {
-    ADD = 0,    // adding
-    SUB = 1,    // subtraction
-    MUL = 2,    // multiplication
-    DIV = 3,    // divison
-    SQR = 4,    // square root
-    POW = 5,    // powering
-    LOG = 6,    // logarithm
-    LNA = 7,    // natural logarithm
-    SIN = 8,    // sinus
-    COS = 9,    // cosinus
-    TAN = 10,   // tangent
-    COT = 11,   // cotangent
-    ASN = 12,   // arcsinus
-    ACS = 13,   // arccosinus
-    ATG = 14,   // argctangent
-    ACT = 15,   // arccotangent
-    SHN = 16,   // hyperbolic sinus
-    CHN = 17,   // hyperbolic cosinus
-    THN = 18,   // hyperbolic tagent
-    CTH = 19,   // hyperbolic cotangent
-    ASH = 20,   // hyperbolic arcsinus
-    ACH = 21,   // hyperbolic arccosinus
-    ATH = 22,   // hyperbolic arctangent
-    AKH = 23,   // hyperbolic arccotangent
+    ADD     = 0,    // adding
+    SUB     = 1,    // subtraction
+    MUL     = 2,    // multiplication
+    DIV     = 3,    // divison
+    SQRT    = 4,    // square root
+    POW     = 5,    // powering
+    LOG     = 6,    // logarithm
+    LN      = 7,    // natural logarithm
+    SIN     = 8,    // sinus
+    COS     = 9,    // cosinus
+    TAN     = 10,   // tangent
+    COT     = 11,   // cotangent
+    ARCSIN  = 12,   // arcsinus
+    ARCCOS  = 13,   // arccosinus
+    ARCTAN  = 14,   // argctangent
+    ARCCOT  = 15,   // arccotangent
+    SINH    = 16,   // hyperbolic sinus
+    COSH    = 17,   // hyperbolic cosinus
+    TANH    = 18,   // hyperbolic tagent
+    COTH    = 19,   // hyperbolic cotangent
+    ARCSINH = 20,   // hyperbolic arcsinus
+    ARCCOSH = 21,   // hyperbolic arccosinus
+    ARCTANH = 22,   // hyperbolic arctangent
+    ARCCOTH = 23,   // hyperbolic arccotangent
 };
 
 //———————————————————————————————————————————————————————————————————//
@@ -122,6 +122,7 @@ struct node_allocator_t
 
 num_t   calc_tree(node_t* root);
 node_t* diff_tree(node_allocator_t* node_allocator, node_t* root);
+node_t* copy_tree(node_t* root);
 
 //———————————————————————————————————————————————————————————————————//
 
