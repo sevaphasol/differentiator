@@ -22,14 +22,14 @@ enum node_allocator_status_t
 
 //———————————————————————————————————————————————————————————————————//
 
-// struct node_allocator_t
-// {
-//     size_t   n_arrays;
-//     size_t   array_len;
-//     node_t** big_array;
-//
-//     int      free_place;
-// };
+struct node_allocator_t
+{
+    size_t   n_arrays;
+    size_t   array_len;
+    node_t** big_array;
+
+    int      free_place;
+};
 
 //———————————————————————————————————————————————————————————————————//
 
@@ -44,7 +44,8 @@ node_t* node_ctor (node_allocator_t* node_allocator,
                    arg_type_t        arg_type,
                    val_t             val,
                    num_t             (*calc_func)(num_t, num_t),
-                   node_t*           (*diff_func)(node_allocator_t*, node_t*, node_t*),
+                   node_t*           (*diff_func)(diff_context_t* context, node_t* node),
+                   void              (*tex_func) (diff_context_t* context, node_t* node),
                    node_t*           left,
                    node_t*           right);
 

@@ -76,8 +76,9 @@ node_allocator_status_t node_allocator_dtor(node_allocator_t* allocator)
 node_t* node_ctor(node_allocator_t* allocator,
                   arg_type_t        arg_type,
                   val_t             val,
-                  num_t             (*calc_func)(num_t, num_t),
-                  node_t*           (*diff_func)(node_allocator_t*, node_t*, node_t*),
+                  num_t             (*calc_func)(num_t n1, num_t n2),
+                  node_t*           (*diff_func)(diff_context_t* ctx, node_t* node),
+                  void              (*tex_func) (diff_context_t* ctx, node_t* node),
                   node_t*           left,
                   node_t*           right)
 {
@@ -102,39 +103,16 @@ node_t* node_ctor(node_allocator_t* allocator,
 
     //-------------------------------------------------------------------//
 
-    new_node->arg_type = arg_type;
-    new_node->val      = val;
-    new_node->left     = left;
-    new_node->right    = right;
+    new_node->arg_type  = arg_type;
+    new_node->val       = val;
+    new_node->left      = left;
+    new_node->right     = right;
 
     //-------------------------------------------------------------------//
 
-    switch (arg_type)
-    {
-        case NUM:
-        {
-            new_node->calc_func = nullptr;
-            new_node->diff_func = &diff_const;
-            break;
-        }
-        case VAR:
-        {
-            new_node->calc_func = nullptr;
-            new_node->diff_func = &diff_var;
-            break;
-        }
-        case OPR:
-        {
-            new_node->calc_func = OperationsTable[val.opr].calc_func;
-            new_node->diff_func = OperationsTable[val.opr].diff_func;
-            break;
-        }
-        default:
-        {
-            ASSERT(0);
-            break;
-        }
-    }
+    new_node->calc_func = calc_func;
+    new_node->diff_func = diff_func;
+    new_node->tex_func  = tex_func;
 
     //-------------------------------------------------------------------//
 

@@ -1,16 +1,24 @@
 // #include "diff.h"
 #include <stdlib.h>
 
-#include "node_allocator.h"
+//-------------------------------------------------------------------//
+
+#include "diff.h"
+
+//———————————————————————————————————————————————————————————————————//
+
+const size_t nOperations = 24;
 
 //———————————————————————————————————————————————————————————————————//
 
 struct operation_t
 {
-    const char* name;
     opr_t       code;
+    const char* name;
+    bool        binary;
     num_t       (*calc_func)(num_t, num_t);
-    node_t*     (*diff_func)(node_allocator_t*, node_t*);
+    node_t*     (*diff_func)(diff_context_t* context, node_t* node);
+    void        (*tex_func) (diff_context_t* context, node_t* node);
 };
 
 //-------------------------------------------------------------------//
@@ -42,62 +50,91 @@ num_t   calc_arccoth (num_t n1, num_t n2);
 
 //-------------------------------------------------------------------//
 
-node_t* diff_const   (node_allocator_t* node_allocator, node_t* node);
-node_t* diff_var     (node_allocator_t* node_allocator, node_t* node);
+node_t* diff_num     (diff_context_t* ctx, node_t* node);
+node_t* diff_var     (diff_context_t* ctx, node_t* node);
+node_t* diff_add     (diff_context_t* ctx, node_t* node);
+node_t* diff_sub     (diff_context_t* ctx, node_t* node);
+node_t* diff_mul     (diff_context_t* ctx, node_t* node);
+node_t* diff_div     (diff_context_t* ctx, node_t* node);
+node_t* diff_sqrt    (diff_context_t* ctx, node_t* node);
+node_t* diff_pow     (diff_context_t* ctx, node_t* node);
+node_t* diff_log     (diff_context_t* ctx, node_t* node);
+node_t* diff_ln      (diff_context_t* ctx, node_t* node);
+node_t* diff_sin     (diff_context_t* ctx, node_t* node);
+node_t* diff_cos     (diff_context_t* ctx, node_t* node);
+node_t* diff_tan     (diff_context_t* ctx, node_t* node);
+node_t* diff_cot     (diff_context_t* ctx, node_t* node);
+node_t* diff_arcsin  (diff_context_t* ctx, node_t* node);
+node_t* diff_arccos  (diff_context_t* ctx, node_t* node);
+node_t* diff_arctan  (diff_context_t* ctx, node_t* node);
+node_t* diff_arccot  (diff_context_t* ctx, node_t* node);
+node_t* diff_sinh    (diff_context_t* ctx, node_t* node);
+node_t* diff_cosh    (diff_context_t* ctx, node_t* node);
+node_t* diff_tanh    (diff_context_t* ctx, node_t* node);
+node_t* diff_coth    (diff_context_t* ctx, node_t* node);
+node_t* diff_arcsinh (diff_context_t* ctx, node_t* node);
+node_t* diff_arccosh (diff_context_t* ctx, node_t* node);
+node_t* diff_arctanh (diff_context_t* ctx, node_t* node);
+node_t* diff_arccoth (diff_context_t* ctx, node_t* node);
 
-node_t* diff_add     (node_allocator_t* node_allocator, node_t* node);
-node_t* diff_sub     (node_allocator_t* node_allocator, node_t* node);
-node_t* diff_mul     (node_allocator_t* node_allocator, node_t* node);
-node_t* diff_div     (node_allocator_t* node_allocator, node_t* node);
-node_t* diff_sqrt    (node_allocator_t* node_allocator, node_t* node);
-node_t* diff_pow     (node_allocator_t* node_allocator, node_t* node);
-node_t* diff_log     (node_allocator_t* node_allocator, node_t* node);
-node_t* diff_ln      (node_allocator_t* node_allocator, node_t* node);
-node_t* diff_sin     (node_allocator_t* node_allocator, node_t* node);
-node_t* diff_cos     (node_allocator_t* node_allocator, node_t* node);
-node_t* diff_tan     (node_allocator_t* node_allocator, node_t* node);
-node_t* diff_cot     (node_allocator_t* node_allocator, node_t* node);
-node_t* diff_arcsin  (node_allocator_t* node_allocator, node_t* node);
-node_t* diff_arccos  (node_allocator_t* node_allocator, node_t* node);
-node_t* diff_arctan  (node_allocator_t* node_allocator, node_t* node);
-node_t* diff_arccot  (node_allocator_t* node_allocator, node_t* node);
-node_t* diff_sinh    (node_allocator_t* node_allocator, node_t* node);
-node_t* diff_cosh    (node_allocator_t* node_allocator, node_t* node);
-node_t* diff_tanh    (node_allocator_t* node_allocator, node_t* node);
-node_t* diff_coth    (node_allocator_t* node_allocator, node_t* node);
-node_t* diff_arcsinh (node_allocator_t* node_allocator, node_t* node);
-node_t* diff_arccosh (node_allocator_t* node_allocator, node_t* node);
-node_t* diff_arctanh (node_allocator_t* node_allocator, node_t* node);
-node_t* diff_arccoth (node_allocator_t* node_allocator, node_t* node);
+//-------------------------------------------------------------------//
+
+void tex_num         (diff_context_t* ctx, node_t* node);
+void tex_var         (diff_context_t* ctx, node_t* node);
+void tex_add         (diff_context_t* ctx, node_t* node);
+void tex_sub         (diff_context_t* ctx, node_t* node);
+void tex_mul         (diff_context_t* ctx, node_t* node);
+void tex_div         (diff_context_t* ctx, node_t* node);
+void tex_sqrt        (diff_context_t* ctx, node_t* node);
+void tex_pow         (diff_context_t* ctx, node_t* node);
+void tex_log         (diff_context_t* ctx, node_t* node);
+void tex_ln          (diff_context_t* ctx, node_t* node);
+void tex_sin         (diff_context_t* ctx, node_t* node);
+void tex_cos         (diff_context_t* ctx, node_t* node);
+void tex_tan         (diff_context_t* ctx, node_t* node);
+void tex_cot         (diff_context_t* ctx, node_t* node);
+void tex_arcsin      (diff_context_t* ctx, node_t* node);
+void tex_arccos      (diff_context_t* ctx, node_t* node);
+void tex_arctan      (diff_context_t* ctx, node_t* node);
+void tex_arccot      (diff_context_t* ctx, node_t* node);
+void tex_sinh        (diff_context_t* ctx, node_t* node);
+void tex_cosh        (diff_context_t* ctx, node_t* node);
+void tex_tanh        (diff_context_t* ctx, node_t* node);
+void tex_coth        (diff_context_t* ctx, node_t* node);
+void tex_arcsinh     (diff_context_t* ctx, node_t* node);
+void tex_arccosh     (diff_context_t* ctx, node_t* node);
+void tex_arctanh     (diff_context_t* ctx, node_t* node);
+void tex_arccoth     (diff_context_t* ctx, node_t* node);
 
 //-------------------------------------------------------------------//
 
 const operation_t OperationsTable[nOperations] =
     {
-       {.name = "+",       .code = ADD,     .calc_func = &calc_add,     .diff_func = &diff_add},
-       {.name = "-",       .code = SUB,     .calc_func = &calc_sub,     .diff_func = &diff_sub},
-       {.name = "*",       .code = MUL,     .calc_func = &calc_mul,     .diff_func = &diff_mul},
-       {.name = "/",       .code = DIV,     .calc_func = &calc_div,     .diff_func = &diff_div},
-       {.name = "sqrt",    .code = SQRT,    .calc_func = &calc_sqrt,    .diff_func = &diff_sqrt},
-       {.name = "^",       .code = POW,     .calc_func = &calc_pow,     .diff_func = &diff_pow},
-       {.name = "log",     .code = LOG,     .calc_func = &calc_log,     .diff_func = &diff_log},
-       {.name = "ln",      .code = LN,      .calc_func = &calc_ln,      .diff_func = &diff_ln},
-       {.name = "sin",     .code = SIN,     .calc_func = &calc_sin,     .diff_func = &diff_sin},
-       {.name = "cos",     .code = COS,     .calc_func = &calc_cos,     .diff_func = &diff_cos},
-       {.name = "tan",     .code = TAN,     .calc_func = &calc_tan,     .diff_func = &diff_tan},
-       {.name = "cot",     .code = COT,     .calc_func = &calc_cot,     .diff_func = &diff_cot},
-       {.name = "arcsin",  .code = ARCSIN,  .calc_func = &calc_arcsin,  .diff_func = &diff_arcsin},
-       {.name = "arccos",  .code = ARCCOS,  .calc_func = &calc_arccos,  .diff_func = &diff_arccos},
-       {.name = "arctan",  .code = ARCTAN,  .calc_func = &calc_arctan,  .diff_func = &diff_arctan},
-       {.name = "arccot",  .code = ARCCOT,  .calc_func = &calc_arccot,  .diff_func = &diff_arccot},
-       {.name = "sh",      .code = SINH,    .calc_func = &calc_sinh,    .diff_func = &diff_sinh},
-       {.name = "ch",      .code = COSH,    .calc_func = &calc_cosh,    .diff_func = &diff_cosh},
-       {.name = "tanh",    .code = TANH,    .calc_func = &calc_tanh,    .diff_func = &diff_tanh},
-       {.name = "coth",    .code = COTH,    .calc_func = &calc_coth,    .diff_func = &diff_coth},
-       {.name = "arcsinh", .code = ARCSINH, .calc_func = &calc_arcsinh, .diff_func = &diff_arcsinh},
-       {.name = "arccosh", .code = ARCCOSH, .calc_func = &calc_arccosh, .diff_func = &diff_arccosh},
-       {.name = "arctanh", .code = ARCTANH, .calc_func = &calc_arctanh, .diff_func = &diff_arctanh},
-       {.name = "arccoth", .code = ARCCOTH, .calc_func = &calc_arccoth, .diff_func = &diff_arccoth},
+    //   .code      .name     .is_binary     .calc_func       .diff_func        .tex_func
+        { ADD,       "+",         true,       &calc_add,       &diff_add,        &tex_add     },
+        { SUB,       "-",         true,       &calc_sub,       &diff_sub,        &tex_sub     },
+        { MUL,       "*",         true,       &calc_mul,       &diff_mul,        &tex_mul     },
+        { DIV,       "/",         true,       &calc_div,       &diff_div,        &tex_div     },
+        { SQRT,      "sqrt",      false,      &calc_sqrt,      &diff_sqrt,       &tex_sqrt    },
+        { POW,       "^",         true,       &calc_pow,       &diff_pow,        &tex_pow     },
+        { LOG,       "log",       true,       &calc_log,       &diff_log,        &tex_log     },
+        { LN,        "ln",        false,      &calc_ln,        &diff_ln,         &tex_ln      },
+        { SIN,       "sin",       false,      &calc_sin,       &diff_sin,        &tex_sin     },
+        { COS,       "cos",       false,      &calc_cos,       &diff_cos,        &tex_cos     },
+        { TAN,       "tan",       false,      &calc_tan,       &diff_tan,        &tex_tan     },
+        { COT,       "cot",       false,      &calc_cot,       &diff_cot,        &tex_cot     },
+        { ARCSIN,    "arcsin",    false,      &calc_arcsin,    &diff_arcsin,     &tex_arcsin  },
+        { ARCCOS,    "arccos",    false,      &calc_arccos,    &diff_arccos,     &tex_arccos  },
+        { ARCTAN,    "arctan",    false,      &calc_arctan,    &diff_arctan,     &tex_arctan  },
+        { ARCCOT,    "arccot",    false,      &calc_arccot,    &diff_arccot,     &tex_arccot  },
+        { SINH,      "sinh",      false,      &calc_sinh,      &diff_sinh,       &tex_sinh    },
+        { COSH,      "cosh",      false,      &calc_cosh,      &diff_cosh,       &tex_cosh    },
+        { TANH,      "tanh",      false,      &calc_tanh,      &diff_tanh,       &tex_tanh    },
+        { COTH,      "coth",      false,      &calc_coth,      &diff_coth,       &tex_coth    },
+        { ARCSINH,   "arcsinh",   false,      &calc_arcsinh,   &diff_arcsinh,    &tex_arcsinh },
+        { ARCCOSH,   "arccosh",   false,      &calc_arccosh,   &diff_arccosh,    &tex_arccosh },
+        { ARCTANH,   "arctanh",   false,      &calc_arctanh,   &diff_arctanh,    &tex_arctanh },
+        { ARCCOTH,   "arccoth",   false,      &calc_arccoth,   &diff_arccoth,    &tex_arccoth },
     };
 
 //———————————————————————————————————————————————————————————————————//

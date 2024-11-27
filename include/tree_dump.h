@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "node_allocator.h"
+#include "diff.h"
 
 //———————————————————————————————————————————————————————————————————//
 
@@ -39,7 +39,8 @@ const char* const EdgeFontColor       = "#49006a";
 
 //———————————————————————————————————————————————————————————————————//
 
-tree_dump_status_t tree_dump(node_t* root, const char* file_name);
+struct diff_context_t;
+tree_dump_status_t tree_dump(diff_context_t* ctx);
 
 //———————————————————————————————————————————————————————————————————//
 

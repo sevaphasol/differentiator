@@ -1,248 +1,259 @@
-#include "operations.h"
-#include "math.h"
-#include "dsl.h"
 #include "custom_assert.h"
+#include "dsl.h"
+#include "operations.h"
+#include "tree_dump.h"
+#include "node_allocator.h"
 
 //———————————————————————————————————————————————————————————————————//
 
-node_t* diff_const(node_allocator_t* node_allocator, node_t* node)
-{
-    return _NUM(0);
-}
+#define _DIFF_FUNC(name, code)                              \
+node_t* diff_##name(diff_context_t* ctx, node_t* node)      \
+{                                                           \
+    ASSERT(ctx);                                            \
+    ASSERT(node);                                           \
+                                                            \
+    tree_dump(ctx);                                         \
+                                                            \
+    node_allocator_t* node_allocator = ctx->node_allocator; \
+    node_t *l, *r, *dl, *dr;                                \
+                                                            \
+                                                            \
+    l = node->left;                                         \
+    if (l) {dl = _DIFF(l);}                                 \
+                                                            \
+    r = node->right;                                        \
+    if (r) {dr = _DIFF(r);}                                 \
+                                                            \
+    code                                                    \
+                                                            \
+    fprintf(ctx->tex_file, "\n\\begin{equation}\n");        \
+                                                            \
+    fprintf(ctx->tex_file, "\\frac{d}{dx}(");               \
+                                                            \
+    _TEX(node);                                             \
+                                                            \
+    fprintf(ctx->tex_file, ") = ");                         \
+                                                            \
+    _TEX(diffed_node);                                      \
+                                                            \
+    fprintf(ctx->tex_file, "\n\\end{equation}\n");          \
+                                                            \
+    return diffed_node;                                     \
+}                                                           \
+
+//-------------------------------------------------------------------//
+
+#define _RESULT node_t* diffed_node
+
+//———————————————————————————————————————————————————————————————————//
+
+_DIFF_FUNC(num,
+    _RESULT = _NUM(0);
+)
 
 //===================================================================//
 
-node_t* diff_var(node_allocator_t* node_allocator, node_t* node)
-{
-    return _NUM(1);
-}
+_DIFF_FUNC(var,
+    _RESULT = _NUM(1);
+)
 
 //===================================================================//
 
-node_t* diff_add(node_allocator_t* node_allocator, node_t* node)
-{
-    ASSERT(node_allocator);
-    ASSERT(node);
-
-    //-------------------------------------------------------------------//
-
-    node_t* left  = node->left;
-    node_t* right = node->right;
-
-    //-------------------------------------------------------------------//
-
-    return _ADD(_DIFF(left), _DIFF(right));
-}
+_DIFF_FUNC(add,
+    _RESULT = _ADD(dl, dr);
+)
 
 //===================================================================//
 
-node_t* diff_sub(node_allocator_t* node_allocator, node_t* node)
-{
-    ASSERT(node_allocator);
-    ASSERT(node);
-
-    //-------------------------------------------------------------------//
-
-    node_t* left  = node->left;
-    node_t* right = node->right;
-
-    //-------------------------------------------------------------------//
-
-    return _SUB(_DIFF(left), _DIFF(right));
-}
+_DIFF_FUNC(sub,
+    _RESULT = _SUB(dl, dr);
+)
 
 //===================================================================//
 
-node_t* diff_mul(node_allocator_t* node_allocator, node_t* node)
-{
-    ASSERT(node_allocator);
-    ASSERT(node);
-
-    //-------------------------------------------------------------------//
-
-    node_t* left  = node->left;
-    node_t* right = node->right;
-
-    //-------------------------------------------------------------------//
-
-    return _ADD(_MUL(_DIFF(left),  node->right),
-                _MUL(_DIFF(right), node->left));
-}
+_DIFF_FUNC(mul,
+    _RESULT = _ADD(_MUL(dl, r),
+                   _MUL(dr, l));
+)
 
 //===================================================================//
 
-node_t* diff_div(node_allocator_t* node_allocator, node_t* node)
-{
-    ASSERT(node_allocator);
-    ASSERT(node);
-
-    //-------------------------------------------------------------------//
-
-    node_t* left  = node->left;
-    node_t* right = node->right;
-
-    //-------------------------------------------------------------------//
-
-    return _DIV(_SUB(_MUL(_DIFF(left),  right),
-                     _MUL(_DIFF(right), left)),
-                _POW(right, 2));
-}
+_DIFF_FUNC(div,
+    _RESULT = _DIV(_SUB(_MUL(dl,  dr),
+                        _MUL(dr, l)),
+                   _POW(dr, _NUM(2)));
+)
 
 //===================================================================//
 
-node_t* diff_sqrt(node_allocator_t* node_allocator, node_t* node)
-{
-    return _MUL(_DIV(_NUM(1), _MUL(_NUM(2), node1)),
-                node1->diff_func(node_allocator, node1->left, node2->right));
-}
+_DIFF_FUNC(sqrt,
+    _RESULT = _DIV(dl,
+                   _MUL(_NUM(2),
+                        _SQRT(l)));
+)
 
 //===================================================================//
 
-node_t* diff_pow(node_allocator_t* node_allocator, node_t* node)
-{
-    if (node2->arg_type == NUM)
-    {
-        return _MUL(_MUL(node2, _POW(node1, _NUM(node2->val.num - 1))),
-                    node1->diff_func(node_allocator, node1->left, node2->left));
-    }
-    else
-    {
-        node_t* left  = _POW(node1, node2);
-        node_t* right = _MUL(_LN(node1), node2);
-
-        return _MUL(left, right->diff_func(right->left, right->right));
-    }
-}
+_DIFF_FUNC(pow,
+    _RESULT = _MUL(_POW(l,
+                        dr),
+                   _DIFF(_MUL(_LN(l),
+                              dr)));
+)
 
 //===================================================================//
 
-node_t* diff_log(node_allocator_t* node_allocator, node_t* node)
-{
-    node_t* node = _DIV(_LN(node1), _LN(node2));
-
-    return node->diff_func(node1, node2);
-}
+_DIFF_FUNC(log,
+    _RESULT = _DIFF(_DIV(_LN(r),
+                         _LN(l)));
+)
 
 //===================================================================//
 
-node_t* diff_ln(node_allocator_t* node_allocator, node_t* node)
-{
-    node_t* left  = _DIV(_NUM(1), node1);
-    node_t* right = node1->diff_func();
-
-    return _DIV(_NUM(1), node1)
-}
+_DIFF_FUNC(ln,
+    _RESULT = _DIV(dl,
+                   l);
+)
 
 //===================================================================//
 
-node_t* diff_sin(node_allocator_t* node_allocator, node_t* node)
-{
-
-}
-
-//===================================================================//
-
-node_t* diff_cos(node_allocator_t* node_allocator, node_t* node)
-{
-
-}
+_DIFF_FUNC(sin,
+    _RESULT = _MUL(_COS(l),
+                   dl);
+)
 
 //===================================================================//
 
-node_t* diff_tan(node_allocator_t* node_allocator, node_t* node)
-{
-
-}
-
-//===================================================================//
-
-node_t* diff_cot(node_allocator_t* node_allocator, node_t* node)
-{
-
-}
+_DIFF_FUNC(cos,
+    _RESULT = _MUL(_MUL(_NUM(-1),
+                        _SIN(l)),
+                   dl);
+)
 
 //===================================================================//
 
-node_t* diff_arcsin(node_allocator_t* node_allocator, node_t* node)
-{
-
-}
-
-//===================================================================//
-
-node_t* diff_arccos(node_allocator_t* node_allocator, node_t* node)
-{
-
-}
+_DIFF_FUNC(tan,
+    _RESULT = _DIV(dl,
+                   _POW(_COS(l),
+                        _NUM(2)));
+)
 
 //===================================================================//
 
-node_t* diff_arctan(node_allocator_t* node_allocator, node_t* node)
-{
-
-}
-
-//===================================================================//
-
-node_t* diff_arccot(node_allocator_t* node_allocator, node_t* node)
-{
-
-}
+_DIFF_FUNC(cot,
+    _RESULT = _DIV(dl,
+                   _POW(_SIN(l),
+                        _NUM(2)));
+)
 
 //===================================================================//
 
-node_t* diff_sinh(node_allocator_t* node_allocator, node_t* node)
-{
-
-}
-
-//===================================================================//
-
-node_t* diff_cosh(node_allocator_t* node_allocator, node_t* node)
-{
-
-}
+_DIFF_FUNC(arcsin,
+    _RESULT = _DIV(dl,
+                   _SQRT(_SUB(_NUM(1),
+                              _POW(l,
+                                   _NUM(2)))));
+)
 
 //===================================================================//
 
-node_t* diff_tanh(node_allocator_t* node_allocator, node_t* node)
-{
-
-}
-
-//===================================================================//
-
-node_t* diff_coth(node_allocator_t* node_allocator, node_t* node)
-{
-
-}
+_DIFF_FUNC(arccos,
+    _RESULT = _DIV(_MUL(_NUM(-1),
+                        dl),
+                   _SQRT(_SUB(_NUM(1),
+                              _POW(l,
+                                    _NUM(2)))));
+)
 
 //===================================================================//
 
-node_t* diff_arcsinh(node_allocator_t* node_allocator, node_t* node)
-{
-
-}
-
-//===================================================================//
-
-node_t* diff_arccosh(node_allocator_t* node_allocator, node_t* node)
-{
-
-}
+_DIFF_FUNC(arctan,
+    _RESULT = _DIV(dl,
+                   _ADD(_NUM(1),
+                        _POW(l,
+                             _NUM(2))));
+)
 
 //===================================================================//
 
-node_t* diff_arctanh(node_allocator_t* node_allocator, node_t* node)
-{
-
-}
+_DIFF_FUNC(arccot,
+    _RESULT = _DIV(_MUL(_NUM(-1),
+                        dl),
+                   _ADD(_NUM(1),
+                        _POW(l,
+                             _NUM(2))));
+)
 
 //===================================================================//
 
-node_t* diff_arccoth(node_allocator_t* node_allocator, node_t* node)
-{
+_DIFF_FUNC(sinh,
+    _RESULT = _MUL(_COSH(l),
+                   dl);
+)
 
-}
+//===================================================================//
+
+_DIFF_FUNC(cosh,
+    _RESULT = _MUL(_SINH(l),
+                   dl);
+)
+
+//===================================================================//
+
+_DIFF_FUNC(tanh,
+    _RESULT = _DIV(dl,
+                   _POW(_COSH(l),
+                        _NUM(2)));
+)
+
+//===================================================================//
+
+_DIFF_FUNC(coth,
+    _RESULT = _DIV(_MUL(_NUM(-1),
+                        dl),
+                   _POW(_SINH(l),
+                        _NUM(2)));
+)
+
+//===================================================================//
+
+_DIFF_FUNC(arcsinh,
+    _RESULT = _DIV(dl,
+                   _SQRT(_ADD(_NUM(1),
+                              _POW(l,
+                                   _NUM(2)))));
+)
+
+//===================================================================//
+
+_DIFF_FUNC(arccosh,
+    _RESULT = _DIV(dl,
+                   _SQRT(_SUB(_POW(l,
+                                   _NUM(2)),
+                              _NUM(1))));
+)
+
+//===================================================================//
+
+_DIFF_FUNC(arctanh,
+    _RESULT = _DIV(dl,
+                   _SUB(_NUM(1),
+                        _POW(l,
+                             _NUM(2))));
+)
+
+//===================================================================//
+
+_DIFF_FUNC(arccoth,
+    _RESULT = _DIV(dl,
+                   _SUB(_NUM(1),
+                        _POW(l,
+                             _NUM(2))));
+)
+
+//———————————————————————————————————————————————————————————————————//
+
+#undef DIFF_FUNC
+#undef _RESULT
 
 //———————————————————————————————————————————————————————————————————//
