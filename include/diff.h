@@ -10,10 +10,18 @@
 
 enum diff_status_t
 {
-    DIFF_SUCCESS                   = 0,
-    DIFF_NODE_ALLOCATOR_CTOR_ERROR = 1,
-    DIFF_FILE_OPEN_ERROR           = 2,
-    DIFF_DOT_DUMP_ERROR            = 3,
+    DIFF_SUCCESS                    = 0,
+    DIFF_NODE_ALLOCATOR_CTOR_ERROR  = 1,
+    DIFF_FILE_OPEN_ERROR            = 2,
+    DIFF_DOT_DUMP_ERROR             = 3,
+    DIFF_READ_PHRASES_ERROR         = 4,
+    DIFF_ALLOCATE_ERROR             = 5,
+    DIFF_FILE_READ_ERROR            = 6,
+    DIFF_GET_FILE_SIZE_ERROR        = 7,
+    DIFF_PHRASES_STRINGS_CTOR_ERROR = 8,
+    DIFF_TEX_DUMP_ERROR             = 9,
+    DIFF_NOT_CONSTANT               = 10,
+    DIFF_TRY_CALC_ERROR             = 11,
 };
 
 //———————————————————————————————————————————————————————————————————//
@@ -107,13 +115,21 @@ struct node_t;
 
 //———————————————————————————————————————————————————————————————————//
 
+struct dump_info_t
+{
+    FILE*             tex_file;
+    const char*       tex_file_name;
+    int               n_dumps; // for dot files
+    char*             phrases_buf;
+    char**            phrases;
+    int               n_phrases;
+};
+
 struct diff_context_t
 {
     node_allocator_t* node_allocator;
     node_t*           root;
-    FILE*             tex_file;
-    const char*       tex_file_name;
-    int               n_dumps;
+    dump_info_t       dump_info;
 };
 
 //———————————————————————————————————————————————————————————————————//
@@ -136,10 +152,12 @@ struct node_t
 diff_status_t diff_context_ctor (diff_context_t* ctx, node_allocator_t* node_allocator);
 diff_status_t diff_context_dtor (diff_context_t*ctx);
 diff_status_t dump              (diff_context_t* ctx, node_t* tree);
-diff_status_t optimize_tree     (node_t* tree);
+diff_status_t optimize_tree     (node_t** tree);
 node_t*       copy_tree         (node_t* root);
 num_t         calc_tree         (node_t* root);
 node_t*       diff_tree         (diff_context_t* ctx, node_t* root);
+
+diff_status_t write_tex_outro   (diff_context_t* ctx);
 
 //———————————————————————————————————————————————————————————————————//
 

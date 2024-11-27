@@ -16,14 +16,14 @@ static tree_dump_status_t recursively_make_dot_node(node_t* node, FILE* file, in
 
 //———————————————————————————————————————————————————————————————————//
 
-tree_dump_status_t tree_dump(diff_context_t* ctx)
+tree_dump_status_t dot_dump(diff_context_t* ctx)
 {
     VERIFY(!ctx, return TREE_DUMP_STRUCT_NULL_PTR_ERROR);
 
     //-------------------------------------------------------------------//
 
     char dot_file_name[FileNameBufSize] = {};
-    snprintf(dot_file_name, FileNameBufSize, LOGS_DIR "/" DOTS_DIR "/" "%03d.dot", ctx->n_dumps);
+    snprintf(dot_file_name, FileNameBufSize, LOGS_DIR "/" DOTS_DIR "/" "%03d.dot", ctx->dump_info.n_dumps);
     FILE* dot_file = fopen(dot_file_name, "w");
     VERIFY(!dot_file, return TREE_DUMP_FILE_OPEN_ERROR);
 
@@ -49,7 +49,7 @@ tree_dump_status_t tree_dump(diff_context_t* ctx)
     //-------------------------------------------------------------------//
 
     char png_file_name[FileNameBufSize] = {};
-    snprintf(png_file_name, FileNameBufSize, LOGS_DIR "/" IMGS_DIR "/" "%03d.png", ctx->n_dumps);
+    snprintf(png_file_name, FileNameBufSize, LOGS_DIR "/" IMGS_DIR "/" "%03d.png", ctx->dump_info.n_dumps);
 
     //-------------------------------------------------------------------//
 
@@ -61,7 +61,7 @@ tree_dump_status_t tree_dump(diff_context_t* ctx)
 
     //-------------------------------------------------------------------//
 
-    ctx->n_dumps++;
+    ctx->dump_info.n_dumps++;
 
     //-------------------------------------------------------------------//
 

@@ -12,7 +12,7 @@ node_t* diff_##name(diff_context_t* ctx, node_t* node)      \
     ASSERT(ctx);                                            \
     ASSERT(node);                                           \
                                                             \
-    tree_dump(ctx);                                         \
+    dot_dump(ctx);                                          \
                                                             \
     node_allocator_t* node_allocator = ctx->node_allocator; \
     node_t *l, *r, *dl, *dr;                                \
@@ -26,23 +26,31 @@ node_t* diff_##name(diff_context_t* ctx, node_t* node)      \
                                                             \
     code                                                    \
                                                             \
-    fprintf(ctx->tex_file, "\n\\begin{equation}\n");        \
+    int random_phrase = (int) random() % ctx->dump_info.n_phrases; \
+    _PRINT("%s", ctx->dump_info.phrases[random_phrase]);           \
                                                             \
-    fprintf(ctx->tex_file, "\\frac{d}{dx}(");               \
+    _PRINT("\n\\begin{equation}\n");                        \
                                                             \
+    _PRINT("\\frac{d}{dx}(");                               \
     _TEX(node);                                             \
-                                                            \
-    fprintf(ctx->tex_file, ") = ");                         \
+    _PRINT(") = ");                                         \
                                                             \
     _TEX(diffed_node);                                      \
                                                             \
-    fprintf(ctx->tex_file, "\n\\end{equation}\n");          \
+    _PRINT("\n\\end{equation}\n");                          \
+                                                            \
+    optimize_tree(&diffed_node);                            \
+    _PRINT("simplify\n");                                   \
+    _PRINT("\n\\begin{equation}\n");                        \
+    _TEX(diffed_node);                                      \
+    _PRINT("\n\\end{equation}\n");                          \
                                                             \
     return diffed_node;                                     \
-}                                                           \
+}
 
 //-------------------------------------------------------------------//
 
+#define _PRINT(...) fprintf(ctx->dump_info.tex_file, ##__VA_ARGS__)
 #define _RESULT node_t* diffed_node
 
 //———————————————————————————————————————————————————————————————————//
@@ -255,5 +263,6 @@ _DIFF_FUNC(arccoth,
 
 #undef DIFF_FUNC
 #undef _RESULT
+#undef _PRINT
 
 //———————————————————————————————————————————————————————————————————//

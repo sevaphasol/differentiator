@@ -4,22 +4,22 @@
 
 //———————————————————————————————————————————————————————————————————//
 
-#define _TEX_FUNC(name, code)                      \
-void tex_##name(diff_context_t* ctx, node_t* node) \
-{                                                  \
-    ASSERT(ctx);                                   \
-    ASSERT(node);                                  \
-                                                   \
-    node_t* l = node->left;                        \
-    node_t* r = node->right;                       \
-                                                   \
-    code                                           \
-}                                                  \
+#define _TEX_FUNC(name, code)                                      \
+void tex_##name(diff_context_t* ctx, node_t* node)                 \
+{                                                                  \
+    ASSERT(ctx);                                                   \
+    ASSERT(node);                                                  \
+                                                                   \
+    node_t* l = node->left;                                        \
+    node_t* r = node->right;                                       \
+                                                                   \
+    code                                                           \
+}                                                                  \
 
 //-------------------------------------------------------------------//
 
-#define _PRINT(...) fprintf(ctx->tex_file, ##__VA_ARGS__)
-#define _PUTC(symb) fputc(symb, ctx->tex_file)
+#define _PRINT(...) fprintf(ctx->dump_info.tex_file, ##__VA_ARGS__)
+#define _PUTC(symb) fputc(symb, ctx->dump_info.tex_file)
 
 //-------------------------------------------------------------------//
 
@@ -109,112 +109,112 @@ _TEX_FUNC(ln,
 //===================================================================//
 
 _TEX_FUNC(sin,
-    _PRINT("sin");
+    _PRINT("\\sin");
     _IN_PARENT(_TEX(l));
 )
 
 //===================================================================//
 
 _TEX_FUNC(cos,
-    _PRINT("cos");
+    _PRINT("\\cos");
     _IN_PARENT(_TEX(l));
 )
 
 //===================================================================//
 
 _TEX_FUNC(tan,
-    _PRINT("tan");
+    _PRINT("\\tan");
     _IN_PARENT(_TEX(l));
 )
 
 //===================================================================//
 
 _TEX_FUNC(cot,
-    _PRINT("cot");
+    _PRINT("\\cot");
     _IN_PARENT(_TEX(l));
 )
 
 //===================================================================//
 
 _TEX_FUNC(arcsin,
-    _PRINT("arcsin");
+    _PRINT("\\arcsin");
     _IN_PARENT(_TEX(l));
 )
 
 //===================================================================//
 
 _TEX_FUNC(arccos,
-    _PRINT("arccos");
+    _PRINT("\\arccos");
     _IN_PARENT(_TEX(l));
 )
 
 //===================================================================//
 
 _TEX_FUNC(arctan,
-    _PRINT("arctan");
+    _PRINT("\\arctan");
     _IN_PARENT(_TEX(l));
 )
 
 //===================================================================//
 
 _TEX_FUNC(arccot,
-    _PRINT("arccot");
+    _PRINT("\\arccot");
     _IN_PARENT(_TEX(l));
 )
 
 //===================================================================//
 
 _TEX_FUNC(sinh,
-    _PRINT("sinh");
+    _PRINT("\\sinh");
     _IN_PARENT(_TEX(l));
 )
 
 //===================================================================//
 
 _TEX_FUNC(cosh,
-    _PRINT("cosh");
+    _PRINT("\\cosh");
     _IN_PARENT(_TEX(l));
 )
 
 //===================================================================//
 
 _TEX_FUNC(tanh,
-    _PRINT("tanh");
+    _PRINT("\\tanh");
     _IN_PARENT(_TEX(l));
 )
 
 //===================================================================//
 
 _TEX_FUNC(coth,
-    _PRINT("coth");
+    _PRINT("\\coth");
     _IN_PARENT(_TEX(l));
 )
 
 //===================================================================//
 
 _TEX_FUNC(arcsinh,
-    _PRINT("arsinh");
+    _PRINT("\\arcsinh");
     _IN_PARENT(_TEX(l));
 )
 
 //===================================================================//
 
 _TEX_FUNC(arccosh,
-    _PRINT("arccosh");
+    _PRINT("\\arccosh");
     _IN_PARENT(_TEX(l));
 )
 
 //===================================================================//
 
 _TEX_FUNC(arctanh,
-    _PRINT("arctanh");
+    _PRINT("\\arctanh");
     _IN_PARENT(_TEX(l));
 )
 
 //===================================================================//
 
 _TEX_FUNC(arccoth,
-    _PRINT("arccoth");
+    _PRINT("\\arccoth");
     _IN_PARENT(_TEX(l));
 )
 

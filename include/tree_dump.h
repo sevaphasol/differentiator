@@ -40,7 +40,8 @@ const char* const EdgeFontColor       = "#49006a";
 //———————————————————————————————————————————————————————————————————//
 
 struct diff_context_t;
-tree_dump_status_t tree_dump(diff_context_t* ctx);
+tree_dump_status_t dot_dump(diff_context_t* ctx);
+diff_status_t      tex_dump(diff_context_t* ctx, node_t* tree);
 
 //———————————————————————————————————————————————————————————————————//
 
