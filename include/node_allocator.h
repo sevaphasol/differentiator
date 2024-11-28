@@ -43,9 +43,10 @@ node_allocator_status_t node_allocator_dtor(node_allocator_t* allocator);
 node_t* node_ctor (node_allocator_t* node_allocator,
                    arg_type_t        arg_type,
                    val_t             val,
-                   num_t             (*calc_func)(num_t, num_t),
-                   node_t*           (*diff_func)(diff_context_t* context, node_t* node),
-                   void              (*tex_func) (diff_context_t* context, node_t* node),
+                   num_t             (*calc_func)    (num_t, num_t),
+                   node_t*           (*diff_func)    (diff_context_t* context, node_t* node),
+                   void              (*tex_func)     (diff_context_t* context, node_t* node),
+                   node_t*           (*simplify_func)(diff_context_t* context, node_t* node),
                    node_t*           left,
                    node_t*           right);
 

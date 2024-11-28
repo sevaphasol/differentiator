@@ -144,6 +144,7 @@ node_t* get_tree(node_allocator_t* node_allocator, const char** expression, char
                              nullptr,
                              &diff_num,
                              &tex_num,
+                             &simplify_num,
                              nullptr, nullptr);
         }
         case VAR:
@@ -153,6 +154,7 @@ node_t* get_tree(node_allocator_t* node_allocator, const char** expression, char
                              nullptr,
                              &diff_var,
                              &tex_var,
+                             &simplify_var,
                              nullptr, nullptr);
         }
         case OPR:
@@ -170,6 +172,7 @@ node_t* get_tree(node_allocator_t* node_allocator, const char** expression, char
                              OperationsTable[val.opr].calc_func,
                              OperationsTable[val.opr].diff_func,
                              OperationsTable[val.opr].tex_func,
+                             OperationsTable[val.opr].simplify_func,
                              left, right);
         }
         default:

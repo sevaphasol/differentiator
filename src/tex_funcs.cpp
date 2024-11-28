@@ -65,6 +65,7 @@ _TEX_FUNC(sub,
 
 _TEX_FUNC(mul,
     _TEX(l);
+    _PRINT(" \\cdot ");
     _TEX(r);
 )
 
@@ -94,8 +95,8 @@ _TEX_FUNC(pow,
 //===================================================================//
 
 _TEX_FUNC(log,
-    _PRINT("\\log");
-    _IN_BRACES(_TEX(l));
+    _PRINT("\\log_");
+    _TEX(l);
     _IN_PARENT(_TEX(r));
 )
 

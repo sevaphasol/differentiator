@@ -139,9 +139,10 @@ struct node_t
     arg_type_t arg_type;
     val_t      val;
 
-    num_t      (*calc_func)(num_t, num_t);
-    node_t*    (*diff_func)(diff_context_t* context, node_t* node);
-    void       (*tex_func) (diff_context_t* context, node_t* node);
+    num_t      (*calc_func)     (num_t, num_t);
+    node_t*    (*diff_func)     (diff_context_t* context, node_t* node);
+    void       (*tex_func)      (diff_context_t* context, node_t* node);
+    node_t*    (*simplify_func) (diff_context_t* context, node_t* node);
 
     node_t*    left;
     node_t*    right;
@@ -151,13 +152,10 @@ struct node_t
 
 diff_status_t diff_context_ctor (diff_context_t* ctx, node_allocator_t* node_allocator);
 diff_status_t diff_context_dtor (diff_context_t*ctx);
-diff_status_t dump              (diff_context_t* ctx, node_t* tree);
-diff_status_t optimize_tree     (node_t** tree);
-node_t*       copy_tree         (node_t* root);
-num_t         calc_tree         (node_t* root);
+node_t*       copy_tree         (diff_context_t* ctx, node_t* root);
+diff_status_t try_calc          (node_t* tree);
 node_t*       diff_tree         (diff_context_t* ctx, node_t* root);
-
-diff_status_t write_tex_outro   (diff_context_t* ctx);
+diff_status_t try_calc_opr      (node_t* tree);
 
 //———————————————————————————————————————————————————————————————————//
 

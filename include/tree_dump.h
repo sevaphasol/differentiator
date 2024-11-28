@@ -39,9 +39,42 @@ const char* const EdgeFontColor       = "#49006a";
 
 //———————————————————————————————————————————————————————————————————//
 
-struct diff_context_t;
-tree_dump_status_t dot_dump(diff_context_t* ctx);
-diff_status_t      tex_dump(diff_context_t* ctx, node_t* tree);
+const int nAllocatedNodes = 1024;
+
+//———————————————————————————————————————————————————————————————————//
+
+const char* const TexFile  = "diff.tex";
+
+const char* const TexIntro = "\\documentclass[12pt, a4paper]{article}\n"
+                             "\\usepackage[T2A]{fontenc}\n"
+                             "\\usepackage[utf8x]{inputenc}\n"
+                             "\\usepackage[english, russian]{babel}\n"
+                             "\\usepackage{mathtools}\n"
+                             "\\DeclareMathOperator{\\arcsinh}{arcsinh}\n"
+                             "\\DeclareMathOperator{\\arccosh}{arccosh}\n"
+                             "\\DeclareMathOperator{\\arctanh}{arctanh}\n"
+                             "\\DeclareMathOperator{\\arccoth}{arccoth}\n"
+                             "\\begin{document}\n"
+                             "\\title{Производная туда сюда\n}"
+                             "\\author{Севсоль, 1 курс ЭРТЭ}\n"
+                             "\\date{\\today}\n"
+                             "\\maketitle \n";
+
+const char* const TexStart = "";
+
+const char* const TexEnd   = "Вот мы и посчитали производную. Кстати,"
+                             " уважаемая КВМ, пососите мои яйки.";
+
+const char* const TexOutro = "\n\\end{document}\n";
+const char* const PhrasesFile = "phrases.txt";
+
+//———————————————————————————————————————————————————————————————————//
+
+tree_dump_status_t dot_dump        (diff_context_t* ctx, node_t* node);
+diff_status_t      tex_dump        (diff_context_t* ctx, node_t* node);
+diff_status_t      write_tex_intro (diff_context_t* ctx);
+diff_status_t      write_tex_outro (diff_context_t* ctx);
+diff_status_t      read_phrases    (dump_info_t* dump_info, FILE* fp);
 
 //———————————————————————————————————————————————————————————————————//
 

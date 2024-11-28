@@ -6,11 +6,16 @@
 
 //———————————————————————————————————————————————————————————————————//
 
-const char* const Expression = "(+(1)(-(2)(1)))";
+const char* const Expression = "(*(+(arctan(x))(-(sinh(^(x)(2)))(sqrt(^(x)(2)))))(sinh(cosh(ln(x)))))";
+// const char* const Expression = "(+(+(x)(x))(0))";
+// const char* const Expression = "(sqrt(-(^(x)(2))(1))))";
+// const char* const Expression = "(^(*(sqrt(x))(ln(x)))(+(x)(x)))";
+// const char* const Expression = "(^(x)(3))";
+// const char* const Expression = "(*(/(x)(sin(x)))(x))";
 
 //———————————————————————————————————————————————————————————————————//
 
-int main()
+int main() // GNU plot
 {
     node_allocator_t  node_allocator = {};
     diff_context_t    ctx = {};
@@ -28,23 +33,17 @@ int main()
 
     //-------------------------------------------------------------------//
 
-    VERIFY(dump(&ctx, root) != DIFF_SUCCESS,
-           diff_context_dtor(&ctx);
+    VERIFY(write_tex_intro(&ctx) != DIFF_SUCCESS,
            return EXIT_FAILURE);
 
     //-------------------------------------------------------------------//
 
     node_t* res = diff_tree(&ctx, root);
+    dot_dump(&ctx, res);
 
     //-------------------------------------------------------------------//
 
     VERIFY(write_tex_outro(&ctx) != DIFF_SUCCESS,
-           return EXIT_FAILURE);
-
-    //-------------------------------------------------------------------//
-
-    VERIFY(dump(&ctx, res) != DIFF_SUCCESS,
-           diff_context_dtor(&ctx);
            return EXIT_FAILURE);
 
     //-------------------------------------------------------------------//
