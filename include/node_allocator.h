@@ -32,7 +32,6 @@ struct node_allocator_t
     size_t   n_arrays;
     size_t   array_len;
     node_t** big_array;
-
     int      free_place;
 };
 

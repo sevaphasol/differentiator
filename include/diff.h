@@ -165,7 +165,7 @@ struct node_func_ptrs_t
     num_t      (*calc_func)     (num_t, num_t);
     node_t*    (*diff_func)     (diff_context_t* context, node_t* node, exec_mode_t mode);
     void       (*tex_func)      (diff_context_t* context, node_t* node);
-    node_t*    (*simplify_func) (diff_context_t* context, node_t* node, exec_mode_t mode);
+    void       (*simplify_func) (diff_context_t* context, node_t* node, exec_mode_t mode);
     int        (*metric_func)   (diff_context_t* ctx, node_t* node);
 };
 
@@ -199,6 +199,7 @@ diff_status_t try_calc_opr      (node_t* tree, num_t point);
 diff_status_t derivative        (diff_context_t* ctx, node_t* root);
 diff_status_t taylor            (diff_context_t* ctx, node_t* root);
 diff_status_t calc_in_point     (node_t* tree, num_t point);
+bool          is_equal          (num_t n1, num_t n2);
 
 //———————————————————————————————————————————————————————————————————//
 

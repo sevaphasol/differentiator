@@ -1,60 +1,108 @@
 #include "custom_assert.h"
 #include "dsl.h"
 #include "operations.h"
-#include "tree_dump.h"
+#include "tex_dump.h"
 #include "node_allocator.h"
 
 //———————————————————————————————————————————————————————————————————//
 
-#define _DIFF_FUNC(func_name, code)                              \
-node_t* diff_##func_name(diff_context_t* ctx, node_t* node, exec_mode_t mode)      \
-{                                                           \
-    ASSERT(ctx);                                            \
-    ASSERT(node);                                           \
-                                                            \
-    node_allocator_t* node_allocator = ctx->node_allocator; \
-    node_t *l, *r, *dl, *dr, *diffed_node;                  \
-                                                            \
-    (mode == QUIET) ? _QSIMPLIFY(node) : _SIMPLIFY(node);   \
-                                                            \
-    l = node->left;                                         \
-    if (l) {(mode == QUIET) ? dl = _QDIFF(l) : dl = _DIFF(l);}                                 \
-                                                            \
-    r = node->right;                                        \
-    if (r) {(mode == QUIET) ? dr = _QDIFF(r) : dr = _DIFF(r);}                                 \
-                                                            \
-    code                                                    \
-                                                            \
-    (mode == QUIET) ? _QSIMPLIFY(diffed_node) : _SIMPLIFY(diffed_node);   \
-                                                            \
-                                                            \
-    int random_phrase = (int) random() % ctx->dump_info.n_phrases; \
-    if (mode != QUIET)\
-    {\
-    _PRINT("%s", ctx->dump_info.phrases[random_phrase]);           \
-                                                            \
-    _PRINT("\n\\begin{equation}\n");                        \
-                                                            \
-    _PRINT("\\frac{d}{dx}(");                               \
-    _METRIC(node);                                                 \
-    _TEX(node);                                             \
-    _PRINT(") = ");                                         \
-                                                            \
-    _METRIC(diffed_node);                                                 \
-    _TEX(diffed_node);                                      \
-                                                            \
-    _PRINT("\n\\end{equation}\n");                          \
-    }\
-    renames_encrypt(ctx, node);\
-    renames_encrypt(ctx, diffed_node);\
-                                                            \
-    return diffed_node;                                     \
-}
+//////////////////////////////////////////////////
+//////////////////////////////////////////////////
+//////////////////////////////////////////////////
+////////////////ADDITIONAL MACROS/////////////////
+///////////////FOR DEFINING FUNCS/////////////////
+////////////OF DIFFERENTIATION RULES//////////////
+//////////////////////////////////////////////////
+//////////////////////////////////////////////////
+//////////////////////////////////////////////////
+
+//———————————————————————————————————————————————————————————————————//
+
+#define _DIFF_FUNC_INTRO                                              \
+                                                                      \
+    ASSERT(ctx);                                                      \
+    ASSERT(node);                                                     \
+                                                                      \
+    node_allocator_t* node_allocator = ctx->node_allocator;           \
+    node_t *l, *r, *dl, *dr, *diffed_node;                            \
+                                                                      \
+    (mode == QUIET) ? _QSIMPLIFY(node) : _SIMPLIFY(node);             \
+                                                                      \
+    l = node->left;                                                   \
+    if (l) {(mode == QUIET) ? dl = _QDIFF(l) : dl = _DIFF(l);}        \
+                                                                      \
+    r = node->right;                                                  \
+    if (r) {(mode == QUIET) ? dr = _QDIFF(r) : dr = _DIFF(r);}        \
+
+//===================================================================//
+
+#define _TEX_STEP                                                     \
+                                                                      \
+    _PRINT("%s", ctx->dump_info.phrases[random_phrase]);              \
+                                                                      \
+    _PRINT("\n\\begin{equation}\n");                                  \
+    _PRINT("\\frac{d}{dx}(");                                         \
+                                                                      \
+    _METRIC(node);                                                    \
+    _TEX(node);                                                       \
+    _PRINT(") = ");                                                   \
+                                                                      \
+    _METRIC(diffed_node);                                             \
+    _TEX(diffed_node);                                                \
+                                                                      \
+    _PRINT("\n\\end{equation}\n");                                    \
+
+//===================================================================//
+
+#define _DIFF_FUNC_OUTRO                                              \
+                                                                      \
+    if (mode == QUIET)                                                \
+        _QSIMPLIFY(diffed_node);                                      \
+    else                                                              \
+        _SIMPLIFY(diffed_node);                                       \
+                                                                      \
+    int random_phrase = (int) random() % ctx->dump_info.n_phrases;    \
+                                                                      \
+    if (mode != QUIET)                                                \
+    {                                                                 \
+        _TEX_STEP;                                                    \
+    }                                                                 \
+                                                                      \
+    renames_encrypt(ctx, node);                                       \
+    renames_encrypt(ctx, diffed_node);                                \
+                                                                      \
+    return diffed_node;                                               \
+
+//===================================================================//
+
+#define _DIFF_FUNC(func_name, executing_code)                         \
+                                                                      \
+node_t* diff_##func_name(diff_context_t* ctx,                         \
+                         node_t* node,                                \
+                         exec_mode_t mode)                            \
+{                                                                     \
+    _DIFF_FUNC_INTRO;                                                 \
+    executing_code;                                                   \
+    _DIFF_FUNC_OUTRO;                                                 \
+}                                                                     \
+
+//===================================================================//
+
+#define _PRINT(...) fprintf(ctx->dump_info.tex_file, ##__VA_ARGS__)
 
 //-------------------------------------------------------------------//
 
-#define _PRINT(...) fprintf(ctx->dump_info.tex_file, ##__VA_ARGS__)
 #define _RESULT diffed_node
+
+//———————————————————————————————————————————————————————————————————//
+
+//////////////////////////////////////////////////
+//////////////////////////////////////////////////
+//////////////////////////////////////////////////
+///////////////DEFINITION OF FUNCS////////////////
+//////////////////////////////////////////////////
+//////////////////////////////////////////////////
+//////////////////////////////////////////////////
 
 //———————————————————————————————————————————————————————————————————//
 
@@ -299,8 +347,11 @@ _DIFF_FUNC(arccoth,
 
 //———————————————————————————————————————————————————————————————————//
 
-#undef DIFF_FUNC
+#undef _DIFF_FUNC_INTRO
 #undef _RESULT
 #undef _PRINT
+#undef _TEX_STEP
+#undef _DIFF_FUNC_OUTRO
+#undef _DIFF_FUNC
 
 //———————————————————————————————————————————————————————————————————//

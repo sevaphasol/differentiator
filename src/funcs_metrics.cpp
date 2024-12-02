@@ -1,45 +1,78 @@
 #include "custom_assert.h"
 #include "dsl.h"
 #include "operations.h"
-#include "tree_dump.h"
+#include "tex_dump.h"
 
 //———————————————————————————————————————————————————————————————————//
 
-#define _METRIC_FUNC(func_name, code)                              \
-int metric_##func_name(diff_context_t* ctx, node_t* node)      \
-{                                                           \
-    ASSERT(ctx);\
-    ASSERT(node);                   \
-                                                        \
-    if (node->alias.renamed) {return 1;}\
-                                                            \
-    node_t *l, *r;                  \
-    l = node->left;                                         \
-    r = node->right;                                        \
-                                    \
-    int power = 0;                  \
-                                    \
-    code;                           \
-                                    \
-    if (power > CriticalMetricPower)  \
-    {                   \
-        node->alias.renamed = true;\
-        node->alias.name    = ((ctx->n_renamed_nodes++ % 'A') + 'A');\
-        node->alias.metrics = 1;\
-    }\
-    else\
-    {\
-        node->alias.renamed = false;\
-        node->alias.name    = 'n';\
-        node->alias.metrics = power;\
-    }\
-                                    \
-    return power;                   \
-}                                   \
+//////////////////////////////////////////////////
+//////////////////////////////////////////////////
+//////////////////////////////////////////////////
+////////////////ADDITIONAL MACROS/////////////////
+///////////////FOR DEFINING FUNCS/////////////////
+///////////////COUNTING METRIC OF/////////////////
+///////////////////EXPRESSION/////////////////////
+//////////////////////////////////////////////////
+//////////////////////////////////////////////////
+//////////////////////////////////////////////////
 
-//-------------------------------------------------------------------//
+//———————————————————————————————————————————————————————————————————//
+
+#define _METRICS_FUNC_INTRO                                           \
+                                                                      \
+    ASSERT(ctx);                                                      \
+    ASSERT(node);                                                     \
+                                                                      \
+    if (node->alias.renamed) {return 1;}                              \
+                                                                      \
+    node_t *l, *r;                                                    \
+    l = node->left;                                                   \
+    r = node->right;                                                  \
+                                                                      \
+    int power = 0;                                                    \
+
+//===================================================================//
+
+#define _METRICS_FUNC_OUTRO                                           \
+                                                                      \
+    if (power > CriticalMetricPower)                                  \
+    {                                                                 \
+        node->alias.renamed = true;                                   \
+        node->alias.name    = ((ctx->n_renamed_nodes++ % 'A') + 'A'); \
+        node->alias.metrics = 1;                                      \
+    }                                                                 \
+    else                                                              \
+    {                                                                 \
+        node->alias.renamed = false;                                  \
+        node->alias.name    = 'n';                                    \
+        node->alias.metrics = power;                                  \
+    }                                                                 \
+                                                                      \
+    return power;                                                     \
+
+//===================================================================//
+
+#define _METRIC_FUNC(_func_name, _executing_code)                     \
+int metric_##_func_name(diff_context_t* ctx, node_t* node)            \
+{                                                                     \
+    _METRICS_FUNC_INTRO;                                              \
+    _executing_code;                                                  \
+    _METRICS_FUNC_OUTRO;                                              \
+}                                                                     \
+
+//===================================================================//
 
 #define _RESULT power
+
+//———————————————————————————————————————————————————————————————————//
+
+//////////////////////////////////////////////////
+//////////////////////////////////////////////////
+//////////////////////////////////////////////////
+///////////////DEFINITION OF FUNCS////////////////
+//////////////////////////////////////////////////
+//////////////////////////////////////////////////
+//////////////////////////////////////////////////
 
 //———————————————————————————————————————————————————————————————————//
 
@@ -201,6 +234,8 @@ _METRIC_FUNC(arccoth,
 
 //———————————————————————————————————————————————————————————————————//
 
+#undef _METRIC_FUNC_INTRO
+#undef _METRIC_FUNC_OUTRO
 #undef _METRIC_FUNC
 #undef _RESULT
 

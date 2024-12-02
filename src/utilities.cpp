@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
+#include <math.h>
 
 //-------------------------------------------------------------------//
 
@@ -9,8 +10,8 @@
 #include "operations.h"
 #include "custom_assert.h"
 #include "dsl.h"
-#include "tree_dump.h"
-#include "tree_dump.h"
+#include "graph_dump.h"
+#include "tex_dump.h"
 
 //———————————————————————————————————————————————————————————————————//
 
@@ -259,7 +260,9 @@ diff_status_t diff_context_dtor(diff_context_t* ctx)
     fclose(ctx->dump_info.tex_file);
 
     char command[SysCommandBufSize] = {};
-    snprintf(command, SysCommandBufSize, "pdflatex %s", ctx->dump_info.tex_file_name);
+    snprintf(command, SysCommandBufSize, "pdflatex %s; mv diff.aux "
+                                         "diff.log diff.tex tex_logs/",
+                                         ctx->dump_info.tex_file_name);
 
     system(command);
 
@@ -419,6 +422,13 @@ diff_status_t try_calc(node_t* tree)
     }
 
     return DIFF_TRY_CALC_ERROR;
+}
+
+//===================================================================//
+
+bool is_equal(num_t n1, num_t n2)
+{
+    return fabs(n1 - n2) < 0.00001;
 }
 
 //———————————————————————————————————————————————————————————————————//

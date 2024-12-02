@@ -11,6 +11,7 @@ SOURCES_DIR   = src
 OBJECTS_DIR   = bin
 BUILD_DIR     = build
 LOGS_DIR 	  = logs
+TEX_LOGS_DIR  = tex_logs
 DOT_FILES_DIR = $(LOGS_DIR)/dot_files
 IMAGES_DIR    = $(LOGS_DIR)/images
 
@@ -28,6 +29,7 @@ $(BUILD_DIR):
 $(OBJECTS_DIR):
 	mkdir -p $(OBJECTS_DIR)
 	mkdir -p $(LOGS_DIR)
+	mkdir -p $(TEX_LOGS_DIR)
 	mkdir -p $(DOT_FILES_DIR)
 	mkdir -p $(IMAGES_DIR)
 
@@ -41,4 +43,4 @@ clean_logs:
 	rm $(DOT_FILES_DIR)/*.dot $(IMAGES_DIR)/*.png
 
 clean:
-	rm -fr $(OBJECTS_DIR) $(BUILD_DIR) $(LOGS_DIR)
+	rm -fr $(OBJECTS_DIR) $(BUILD_DIR) $(LOGS_DIR) $(TEX_LOGS_DIR)

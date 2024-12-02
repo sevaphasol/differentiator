@@ -35,6 +35,8 @@ bool try_get_num(const char* str, val_t* val)
         return true;
     }
 
+    //-------------------------------------------------------------------//
+
     return false;
 }
 
@@ -57,6 +59,8 @@ bool try_get_var(const char* str, val_t* val)
         }
     }
 
+    //-------------------------------------------------------------------//
+
     return false;
 }
 
@@ -78,6 +82,8 @@ bool try_get_opr(const char* str, val_t* val)
             return true;
         }
     }
+
+    //-------------------------------------------------------------------//
 
     return false;
 }
@@ -176,13 +182,8 @@ node_t* get_tree(node_allocator_t* node_allocator,
 
             return node_ctor(node_allocator,
                              OPR, {.opr = val.opr},
-                             { OperationsTable[val.opr].calc_func,
-                               OperationsTable[val.opr].diff_func,
-                               OperationsTable[val.opr].tex_func,
-                               OperationsTable[val.opr].simplify_func,
-                               OperationsTable[val.opr].metric_func },
+                             OperationsTable[val.opr].func_ptrs,
                              left, right);
-
         }
         default:
         {

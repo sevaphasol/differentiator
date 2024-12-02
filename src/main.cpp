@@ -1,5 +1,5 @@
 #include "node_allocator.h"
-#include "tree_dump.h"
+#include "tex_dump.h"
 #include "custom_assert.h"
 #include "dsl.h"
 #include "expression_reader.h"
@@ -11,7 +11,8 @@
 // const char* const Expression = "(+(+(x)(x))(0))";
 // const char* const Expression = "(sqrt(-(^(x)(2))(1))))";
 // const char* const Expression = "(^(*(sqrt(+(1)(x)))(ln(+(1)(x))))(sin(x)))";
-const char* const Expression = "(*(ln(+(1)(x))(sqrt(+(1)(sin(x)))))";
+// const char* const Expression = "(*(ln(+(1)(x))(sqrt(+(1)(sin(x)))))";
+const char* const Expression = "(sqrt(^(x)(2)))";
 // const char* const Expression = "(^(x)(3))";
 // const char* const Expression = "(*(/(x)(sin(x)))(x))";
 
