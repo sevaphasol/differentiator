@@ -10,7 +10,9 @@
 
 static void       read_prefix_token (const char** expression, char* buf);
 static arg_type_t token_type        (const char* str);
-static node_t*    get_tree          (node_allocator_t* node_allocator, const char** expression, char* buf);
+static node_t*    get_tree          (node_allocator_t* node_allocator,
+                                     const char** expression,
+                                     char* buf);
 static opr_t      get_opr_code      (const char* name);
 static bool       try_get_num       (const char* str, val_t* val);
 static bool       try_get_var       (const char* str, val_t* val);
@@ -120,7 +122,9 @@ arg_type_t token_type(const char* token, val_t* val)
 
 //===================================================================//
 
-node_t* get_tree(node_allocator_t* node_allocator, const char** expression, char* buf)
+node_t* get_tree(node_allocator_t* node_allocator,
+                 const char** expression,
+                 char* buf)
 {
     ASSERT(node_allocator);
     ASSERT(expression);
@@ -141,25 +145,28 @@ node_t* get_tree(node_allocator_t* node_allocator, const char** expression, char
         {
             return node_ctor(node_allocator,
                              NUM, {.num = val.num},
-                             nullptr,
-                             &diff_num,
-                             &tex_num,
-                             &simplify_num,
-                             nullptr, nullptr);
+                             { nullptr,
+                               &diff_num,
+                               &tex_num,
+                               &simplify_num,
+                               &metric_num },
+                            nullptr, nullptr);
         }
         case VAR:
         {
             return node_ctor(node_allocator,
                              VAR, {.var = val.var},
-                             nullptr,
-                             &diff_var,
-                             &tex_var,
-                             &simplify_var,
+                             { nullptr,
+                               &diff_var,
+                               &tex_var,
+                               &simplify_var,
+                               &metric_var },
                              nullptr, nullptr);
         }
         case OPR:
         {
             node_t* left  = get_tree(node_allocator, expression, buf);
+
             node_t* right = nullptr;
 
             if (OperationsTable[val.opr].binary)
@@ -169,11 +176,13 @@ node_t* get_tree(node_allocator_t* node_allocator, const char** expression, char
 
             return node_ctor(node_allocator,
                              OPR, {.opr = val.opr},
-                             OperationsTable[val.opr].calc_func,
-                             OperationsTable[val.opr].diff_func,
-                             OperationsTable[val.opr].tex_func,
-                             OperationsTable[val.opr].simplify_func,
+                             { OperationsTable[val.opr].calc_func,
+                               OperationsTable[val.opr].diff_func,
+                               OperationsTable[val.opr].tex_func,
+                               OperationsTable[val.opr].simplify_func,
+                               OperationsTable[val.opr].metric_func },
                              left, right);
+
         }
         default:
         {

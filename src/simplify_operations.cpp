@@ -6,59 +6,79 @@
 
 //———————————————————————————————————————————————————————————————————//
 
-#define _SIMPLIFY_FUNC(name, code)                                     \
-node_t* simplify_##name(diff_context_t* ctx, node_t* node)             \
-{                                                                      \
-    ASSERT(ctx);                                                       \
-    ASSERT(node);                                                      \
-                                                                       \
-    node_allocator_t* node_allocator = ctx->node_allocator;            \
-    node_t* l = node->left;                                            \
-    node_t* r = node->right;                                           \
-    node_t* simplified_node = nullptr;                                 \
-                                                                       \
-    if (l) {_SIMPLIFY(l);}                                             \
-    if (r) {_SIMPLIFY(r);}                                             \
-                                                                       \
-    bool simplified = false;                                           \
-                                                                       \
-    _TRY_CALC(node)                                                    \
-                                                                       \
-    code                                                               \
-                                                                       \
-    if (simplified)                                                    \
-    {                                                                  \
-        *node = *simplified_node;                                      \
-    }                                                                  \
-                                                                       \
-                                                                       \
-    return nullptr;                                                    \
-}                                                                      \
+#define _SIMPLIFY_FUNC(func_name, code)                                           \
+node_t* simplify_##func_name(diff_context_t* ctx, node_t* node, exec_mode_t mode) \
+{                                                                            \
+    ASSERT(ctx);                                                             \
+    ASSERT(node);                                                            \
+                                                                             \
+    node_allocator_t* node_allocator = ctx->node_allocator;                  \
+    node_t* l = node->left;                                                  \
+    node_t* r = node->right;                                                 \
+    node_t* simplified_node = nullptr;                                       \
+                                                                             \
+    if (l) {(mode == QUIET) ? _QSIMPLIFY(l) : _SIMPLIFY(l);}                 \
+    if (r) {(mode == QUIET) ? _QSIMPLIFY(r) : _SIMPLIFY(r);}                 \
+                                                                             \
+    bool simplified = false;                                                 \
+                                                                             \
+    _TRY_CALC(node)                                                          \
+                                                                             \
+    code                                                                     \
+                                                                             \
+    _TRY_CALC(node)                                                          \
+                                                                             \
+    if (simplified)                                                          \
+    {                                                                        \
+        *node = *simplified_node;                                            \
+    }                                                                        \
+                                                                             \
+    return nullptr;                                                          \
+}                                                                            \
 
 //-------------------------------------------------------------------//
 
 #define _PRINT(...) fprintf(ctx->dump_info.tex_file, ##__VA_ARGS__)
 
-#define _CHECK_IF_SIMPLE(con, new_node) \
-if (con)                                \
-{                                       \
-    simplified_node = new_node;         \
-    simplified = true;                  \
-}                                       \
+#define _IF_LEFT(_val, new_node) \
+if (l->arg_type == NUM &&        \
+    l->val.num  == _val)         \
+{                                \
+    simplified_node = new_node;  \
+    simplified = true;           \
+}                                \
+
+#define _IF_RIGHT(_val, new_node) \
+if (r->arg_type == NUM &&        \
+    r->val.num  == _val)         \
+{                                \
+    simplified_node = new_node;  \
+    simplified = true;           \
+}                                \
+
+#define _POWER2
 
 #define _TRY_CALC(node)                                 \
-if (l && l->arg_type == NUM && r && r->arg_type == NUM) \
+if (l && l->arg_type == NUM &&                          \
+    r && r->arg_type == NUM)                            \
 {                                                       \
-    _PRINT("Упростим\n");                               \
+    if (mode == QUIET)                                  \
+    {                                                   \
+        try_calc(node);                                 \
+    }                                                   \
+    else                                                \
+    {                                                   \
+        _PRINT("Упростим\n");                           \
                                                         \
-    _PRINT("\n\\begin{equation}\n");                    \
+        _PRINT("\n\\begin{equation}\n");                \
                                                         \
-    _TEX(node);                                         \
-    _PRINT(" = ");                                      \
+        _TEX(node);                                     \
+        _PRINT(" = ");                                  \
                                                         \
-    try_calc(node);                                     \
-    _TEX(node);                                         \
-    _PRINT("\n\\end{equation}\n");                      \
+        try_calc(node);                                 \
+        _TEX(node);                                     \
+        _PRINT("\n\\end{equation}\n");                  \
+    }                                                   \
 }                                                       \
 
 //———————————————————————————————————————————————————————————————————//
@@ -76,67 +96,45 @@ _SIMPLIFY_FUNC(var,
 //===================================================================//
 
 _SIMPLIFY_FUNC(add,
-    _CHECK_IF_SIMPLE(l->arg_type == NUM && l->val.num == 0,
-                     r)
-
-    _CHECK_IF_SIMPLE(r->arg_type == NUM && r->val.num == 0,
-                     l)
+    _IF_LEFT (0, r)
+    _IF_RIGHT(0, l)
 )
 
 //===================================================================//
 
 _SIMPLIFY_FUNC(sub,
-    _CHECK_IF_SIMPLE(l->arg_type == NUM && l->val.num == 0,
-                     _MUL(_NUM(-1), node))
-
-    _CHECK_IF_SIMPLE(r->arg_type == NUM && r->val.num == 0,
-                     l)
+    _IF_LEFT(0, _MUL(_NUM(-1), r))
+    _IF_RIGHT(0, l)
 )
 
 //===================================================================//
 
 _SIMPLIFY_FUNC(mul,
-    _CHECK_IF_SIMPLE((l->arg_type == NUM && l->val.num == 0) ||
-                     (r->arg_type == NUM && r->val.num == 0),
-                     _NUM(0))
+    _IF_LEFT (0, _NUM(0))
+    _IF_RIGHT(0, _NUM(0))
 
-    _CHECK_IF_SIMPLE(l->arg_type == NUM && l->val.num == 1,
-                     r)
-
-    _CHECK_IF_SIMPLE(r->arg_type == NUM && r->val.num == 1,
-                     l)
+    _IF_LEFT (1, r)
+    _IF_RIGHT(1, l)
 )
 
 //===================================================================//
 
 _SIMPLIFY_FUNC(div,
-    _CHECK_IF_SIMPLE(l->arg_type == NUM && l->val.num == 0,
-                     r)
-
-    _CHECK_IF_SIMPLE(r->arg_type == NUM && r->val.num == 1,
-                     l)
+    _IF_LEFT (0, _NUM(0))
+    _IF_RIGHT(1, l)
 )
 
 //===================================================================//
 
 _SIMPLIFY_FUNC(sqrt,
-    _CHECK_IF_SIMPLE(l->arg_type == OPR && l->val.opr == POW &&
-                                           l->right->arg_type == NUM &&
-                                           l->right->val.num == 2,
-                     l->left)
 )
 
 //===================================================================//
 
 _SIMPLIFY_FUNC(pow,
-    _CHECK_IF_SIMPLE(l->arg_type == NUM && l->val.num == 1,
-                     l)
-
-    _CHECK_IF_SIMPLE(r->arg_type == NUM && r->val.num == 1,
-                     l)
-
-    _CHECK_IF_SIMPLE(r->arg_type == NUM && r->val.num == 0,
-                     _NUM(1))
+    _IF_LEFT (1, l)
+    _IF_RIGHT(1, l)
+    _IF_RIGHT(0, _NUM(1))
 )
 
 //===================================================================//

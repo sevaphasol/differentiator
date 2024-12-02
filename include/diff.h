@@ -8,6 +8,18 @@
 
 //———————————————————————————————————————————————————————————————————//
 
+const int CriticalMetricPower = 30;
+
+//———————————————————————————————————————————————————————————————————//
+
+enum exec_mode_t
+{
+    QUIET = 0,
+    LOUD  = 1,
+};
+
+//———————————————————————————————————————————————————————————————————//
+
 enum diff_status_t
 {
     DIFF_SUCCESS                    = 0,
@@ -22,6 +34,8 @@ enum diff_status_t
     DIFF_TEX_DUMP_ERROR             = 9,
     DIFF_NOT_CONSTANT               = 10,
     DIFF_TRY_CALC_ERROR             = 11,
+    DIFF_TEX_ERROR                  = 12,
+    DIFF_CALC_IN_POINT_ERROR        = 13,
 };
 
 //———————————————————————————————————————————————————————————————————//
@@ -108,12 +122,12 @@ union val_t
     opr_t opr;
 };
 
-//———————————————————————————————————————————————————————————————————//
+//-------------------------------------------------------------------//
 
 struct node_allocator_t;
 struct node_t;
 
-//———————————————————————————————————————————————————————————————————//
+//-------------------------------------------------------------------//
 
 struct dump_info_t
 {
@@ -125,11 +139,34 @@ struct dump_info_t
     int               n_phrases;
 };
 
+//-------------------------------------------------------------------//
+
 struct diff_context_t
 {
     node_allocator_t* node_allocator;
     node_t*           root;
     dump_info_t       dump_info;
+    int               n_renamed_nodes;
+};
+
+//-------------------------------------------------------------------//
+
+struct tex_alias_t
+{
+    bool renamed;
+    int  name; // ascii code of upper eng letter, can overflow
+    int  metrics;
+};
+
+//-------------------------------------------------------------------//
+
+struct node_func_ptrs_t
+{
+    num_t      (*calc_func)     (num_t, num_t);
+    node_t*    (*diff_func)     (diff_context_t* context, node_t* node, exec_mode_t mode);
+    void       (*tex_func)      (diff_context_t* context, node_t* node);
+    node_t*    (*simplify_func) (diff_context_t* context, node_t* node, exec_mode_t mode);
+    int        (*metric_func)   (diff_context_t* ctx, node_t* node);
 };
 
 //———————————————————————————————————————————————————————————————————//
@@ -139,23 +176,29 @@ struct node_t
     arg_type_t arg_type;
     val_t      val;
 
-    num_t      (*calc_func)     (num_t, num_t);
-    node_t*    (*diff_func)     (diff_context_t* context, node_t* node);
-    void       (*tex_func)      (diff_context_t* context, node_t* node);
-    node_t*    (*simplify_func) (diff_context_t* context, node_t* node);
+    node_func_ptrs_t func_ptrs;
 
     node_t*    left;
     node_t*    right;
+
+    tex_alias_t alias;
+
+    int depth;
+    int replaced_symb;
+    int n_replaced_symbs;
 };
 
 //———————————————————————————————————————————————————————————————————//
 
 diff_status_t diff_context_ctor (diff_context_t* ctx, node_allocator_t* node_allocator);
-diff_status_t diff_context_dtor (diff_context_t*ctx);
+diff_status_t diff_context_dtor (diff_context_t* ctx);
 node_t*       copy_tree         (diff_context_t* ctx, node_t* root);
 diff_status_t try_calc          (node_t* tree);
 node_t*       diff_tree         (diff_context_t* ctx, node_t* root);
-diff_status_t try_calc_opr      (node_t* tree);
+diff_status_t try_calc_opr      (node_t* tree, num_t point);
+diff_status_t derivative        (diff_context_t* ctx, node_t* root);
+diff_status_t taylor            (diff_context_t* ctx, node_t* root);
+diff_status_t calc_in_point     (node_t* tree, num_t point);
 
 //———————————————————————————————————————————————————————————————————//
 

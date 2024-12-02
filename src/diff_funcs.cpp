@@ -6,8 +6,8 @@
 
 //———————————————————————————————————————————————————————————————————//
 
-#define _DIFF_FUNC(name, code)                              \
-node_t* diff_##name(diff_context_t* ctx, node_t* node)      \
+#define _DIFF_FUNC(func_name, code)                              \
+node_t* diff_##func_name(diff_context_t* ctx, node_t* node, exec_mode_t mode)      \
 {                                                           \
     ASSERT(ctx);                                            \
     ASSERT(node);                                           \
@@ -15,30 +15,38 @@ node_t* diff_##name(diff_context_t* ctx, node_t* node)      \
     node_allocator_t* node_allocator = ctx->node_allocator; \
     node_t *l, *r, *dl, *dr, *diffed_node;                  \
                                                             \
-    _SIMPLIFY(node);                                        \
+    (mode == QUIET) ? _QSIMPLIFY(node) : _SIMPLIFY(node);   \
                                                             \
     l = node->left;                                         \
-    if (l) {dl = _DIFF(l);}                                 \
+    if (l) {(mode == QUIET) ? dl = _QDIFF(l) : dl = _DIFF(l);}                                 \
                                                             \
     r = node->right;                                        \
-    if (r) {dr = _DIFF(r);}                                 \
+    if (r) {(mode == QUIET) ? dr = _QDIFF(r) : dr = _DIFF(r);}                                 \
                                                             \
     code                                                    \
                                                             \
-    _SIMPLIFY(diffed_node);                                 \
+    (mode == QUIET) ? _QSIMPLIFY(diffed_node) : _SIMPLIFY(diffed_node);   \
+                                                            \
                                                             \
     int random_phrase = (int) random() % ctx->dump_info.n_phrases; \
+    if (mode != QUIET)\
+    {\
     _PRINT("%s", ctx->dump_info.phrases[random_phrase]);           \
                                                             \
     _PRINT("\n\\begin{equation}\n");                        \
                                                             \
     _PRINT("\\frac{d}{dx}(");                               \
+    _METRIC(node);                                                 \
     _TEX(node);                                             \
     _PRINT(") = ");                                         \
                                                             \
+    _METRIC(diffed_node);                                                 \
     _TEX(diffed_node);                                      \
                                                             \
     _PRINT("\n\\end{equation}\n");                          \
+    }\
+    renames_encrypt(ctx, node);\
+    renames_encrypt(ctx, diffed_node);\
                                                             \
     return diffed_node;                                     \
 }

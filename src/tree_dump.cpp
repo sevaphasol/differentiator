@@ -3,6 +3,7 @@
 #include <syscall.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <stdarg.h>
 
 //-------------------------------------------------------------------//
 
@@ -21,7 +22,58 @@ static tree_dump_status_t recursively_make_dot_node(node_t* node, FILE* file, in
 
 //———————————————————————————————————————————————————————————————————//
 
-diff_status_t write_tex_intro(diff_context_t* ctx)
+#define _PRINT(...) fprintf(ctx->dump_info.tex_file, ##__VA_ARGS__)
+#define _PUTC(symb) fputc(symb, ctx->dump_info.tex_file)
+
+//———————————————————————————————————————————————————————————————————//
+
+diff_status_t renames_encrypt(diff_context_t* ctx, node_t* node)
+{
+    ASSERT(ctx);
+    ASSERT(node);
+
+    //-------------------------------------------------------------------//
+
+    if (node->alias.renamed)
+    {
+        _PRINT("$$Где %c = ", node->alias.name);
+        node->alias.renamed = false;
+        _TEX(node);
+        _PRINT("$$\n");
+        node->alias.renamed = true;
+    }
+
+    if (node->left)  {renames_encrypt(ctx, node->left); }
+    if (node->right) {renames_encrypt(ctx, node->right);}
+
+    //-------------------------------------------------------------------//
+
+    return DIFF_SUCCESS;
+}
+
+//===================================================================//
+
+diff_status_t print_tex(diff_context_t* ctx, const char* str, ...)
+{
+    ASSERT(ctx);
+
+    //-------------------------------------------------------------------//
+
+    va_list list;
+    va_start(list, str);
+
+    vfprintf(ctx->dump_info.tex_file, str, list);
+
+    va_end(list);
+
+    //-------------------------------------------------------------------//
+
+    return DIFF_SUCCESS;
+}
+
+//===================================================================//
+
+diff_status_t write_derivative_tex_intro(diff_context_t* ctx)
 {
     ASSERT(ctx);
 
@@ -40,7 +92,7 @@ diff_status_t write_tex_intro(diff_context_t* ctx)
 
 //===================================================================//
 
-diff_status_t write_tex_outro(diff_context_t* ctx)
+diff_status_t write_derivative_tex_outro(diff_context_t* ctx)
 {
     ASSERT(ctx);
 
@@ -254,33 +306,39 @@ tree_dump_status_t recursively_make_dot_node(node_t* node, FILE* file, int* node
         {
             fprintf(file, "elem%p["
                 "shape=\"Mrecord\", "
-                "label= \"{%s | %lg}\""
+                "label= \"{%s | val = %lg | metrics = %d | name = %c}\""
                 "];\n",
                 node,
                 "NUM",
-                node->val.num);
+                node->val.num,
+                node->alias.metrics,
+                node->alias.name);
             break;
         }
         case VAR:
         {
             fprintf(file, "elem%p["
                 "shape=\"Mrecord\", "
-                "label= \"{%s | %s}\""
+                "label= \"{%s | val = %s | metrics = %d | name = %c}\""
                 "];\n",
                 node,
                 "VAR",
-                "x");
+                "x",
+                node->alias.metrics,
+                node->alias.name);
             break;
         }
         case OPR:
         {
             fprintf(file, "elem%p["
                 "shape=\"Mrecord\", "
-                "label= \"{%s | %s}\""
+                "label= \"{%s | val = %s | metrics = %d | name = %c}\""
                 "];\n",
                 node,
                 "OPR",
-                OperationsTable[node->val.opr].name);
+                OperationsTable[node->val.opr].name,
+                node->alias.metrics,
+                node->alias.name);
             break;
         }
         default:

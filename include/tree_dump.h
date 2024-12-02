@@ -39,10 +39,6 @@ const char* const EdgeFontColor       = "#49006a";
 
 //———————————————————————————————————————————————————————————————————//
 
-const int nAllocatedNodes = 1024;
-
-//———————————————————————————————————————————————————————————————————//
-
 const char* const TexFile  = "diff.tex";
 
 const char* const TexIntro = "\\documentclass[12pt, a4paper]{article}\n"
@@ -70,11 +66,14 @@ const char* const PhrasesFile = "phrases.txt";
 
 //———————————————————————————————————————————————————————————————————//
 
-tree_dump_status_t dot_dump        (diff_context_t* ctx, node_t* node);
-diff_status_t      tex_dump        (diff_context_t* ctx, node_t* node);
-diff_status_t      write_tex_intro (diff_context_t* ctx);
-diff_status_t      write_tex_outro (diff_context_t* ctx);
-diff_status_t      read_phrases    (dump_info_t* dump_info, FILE* fp);
+tree_dump_status_t dot_dump                   (diff_context_t* ctx, node_t* node);
+diff_status_t      tex_dump                   (diff_context_t* ctx, node_t* node);
+diff_status_t      write_derivative_tex_intro (diff_context_t* ctx);
+diff_status_t      write_derivative_tex_outro (diff_context_t* ctx);
+diff_status_t      print_tex                  (diff_context_t* ctx, const char* str, ...);
+diff_status_t      read_phrases               (dump_info_t* dump_info, FILE* fp);
+diff_status_t      renames_encrypt            (diff_context_t* ctx, node_t* node);
+
 
 //———————————————————————————————————————————————————————————————————//
 

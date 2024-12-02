@@ -4,14 +4,21 @@
 
 //———————————————————————————————————————————————————————————————————//
 
-#define _TEX_FUNC(name, code)                                      \
-void tex_##name(diff_context_t* ctx, node_t* node)                 \
+#define _TEX_FUNC(func_name, code)                                      \
+void tex_##func_name(diff_context_t* ctx, node_t* node)                 \
 {                                                                  \
     ASSERT(ctx);                                                   \
     ASSERT(node);                                                  \
                                                                    \
     node_t* l = node->left;                                        \
     node_t* r = node->right;                                       \
+                                                                   \
+    if (node->alias.renamed)                                       \
+    {                                                              \
+        _PUTC(node->alias.name);                                   \
+                                                                   \
+        return;                                                    \
+    }                                                              \
                                                                    \
     code                                                           \
 }                                                                  \
@@ -87,7 +94,7 @@ _TEX_FUNC(sqrt,
 //===================================================================//
 
 _TEX_FUNC(pow,
-    _IN_BRACES(_TEX(l));
+    _IN_BRACES(_IN_PARENT(_TEX(l)));
     _PUTC('^');
     _IN_BRACES(_TEX(r));
 )
