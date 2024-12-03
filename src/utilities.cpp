@@ -17,14 +17,14 @@
 //———————————————————————————————————————————————————————————————————//
 
 static diff_status_t get_derivaties_in_point(diff_context_t* ctx,
-                                             node_t* expression,
+                                             node_t** expression,
                                              const int n,
-                                             num_t* coeffs,
+                                             node_t** derivatives,
                                              num_t point);
 
 static diff_status_t get_taylor_formula     (diff_context_t* ctx,
                                              const int n,
-                                             num_t* coeffs,
+                                             node_t** derivatives,
                                              num_t point);
 
 static diff_status_t count_node             (node_t* node,
@@ -135,7 +135,8 @@ diff_status_t diff_context_dtor(diff_context_t* ctx)
     fclose(ctx->dump_info.tex_file);
 
     char command[SysCommandBufSize] = {};
-    snprintf(command, SysCommandBufSize, "pdflatex -quiet %s; mv diff.aux "
+    snprintf(command, SysCommandBufSize, "pdflatex -interaction=batchmode"
+                                         " %s; mv diff.aux "
                                          "diff.log diff.tex tex_logs/",
                                          ctx->dump_info.tex_file_name);
 
@@ -148,84 +149,52 @@ diff_status_t diff_context_dtor(diff_context_t* ctx)
 
 //===================================================================//
 
-diff_status_t calc_in_point(node_t* tree, num_t point)
-{
-    ASSERT(tree);
-
-    //-------------------------------------------------------------------//
-
-    switch (tree->arg_type)
-    {
-        case NUM:
-        {
-            return DIFF_SUCCESS;
-        }
-        case VAR:
-        {
-            tree->arg_type = NUM;
-            tree->val.num  = point;
-
-            return DIFF_SUCCESS;
-        }
-        case OPR:
-        {
-            return(try_calc_opr_in_point(tree, point));
-        }
-
-        default: ASSERT(0);
-    }
-
-    return DIFF_TRY_CALC_ERROR;
-}
-
-//===================================================================//
-
 diff_status_t try_calc_opr_in_point(node_t* tree, num_t point)
 {
-    ASSERT(tree);
-    ASSERT(tree->left);
-
-    //-------------------------------------------------------------------//
-
-    if (calc_in_point(tree->left, point) != DIFF_SUCCESS)
-    {
-        return DIFF_NOT_CONSTANT;
-    }
-
-    tree->arg_type                 = NUM;
-    tree->func_ptrs.diff_func      = &diff_num;
-    tree->func_ptrs.tex_func       = &tex_num;
-    tree->func_ptrs.simplify_func  = &simplify_num;
-    tree->func_ptrs.metric_func    = &metric_num;
-
-    if (OperationsTable[tree->val.opr].binary)
-    {
-        ASSERT(tree->right);
-
-        if (calc_in_point(tree->right, point) != DIFF_SUCCESS)
-        {
-                return DIFF_NOT_CONSTANT;
-        }
-
-        tree->val.num  = tree->func_ptrs.calc_func(tree->left->val.num,
-                                         tree->right->val.num);
-        tree->left  = nullptr;
-        tree->right = nullptr;
-
-        return DIFF_SUCCESS;
-    }
-    else
-    {
-        tree->val.num  = tree->func_ptrs.calc_func(tree->left->val.num, 0);
-
-        tree->left  = nullptr;
-        tree->right = nullptr;
-
-        return DIFF_SUCCESS;
-    }
-
-    //-------------------------------------------------------------------//
-
+//     ASSERT(tree);
+//     ASSERT(tree->left);
+//
+//     //-------------------------------------------------------------------//
+//
+//     // if (calc_in_point(tree->left, point) != DIFF_SUCCESS)
+//     // {
+//     //     return DIFF_NOT_CONSTANT;
+//     // }
+//
+//     tree->arg_type                 = NUM;
+//     tree->func_ptrs.diff_func      = &diff_num;
+//     tree->func_ptrs.tex_func       = &tex_num;
+//     tree->func_ptrs.simplify_func  = &simplify_num;
+//     tree->func_ptrs.metric_func    = &metric_num;
+//
+//     if (OperationsTable[tree->val.opr].binary)
+//     {
+//         ASSERT(tree->right);
+//
+//         if (calc_in_point(tree->right, point) != DIFF_SUCCESS)
+//         {
+//                 return DIFF_NOT_CONSTANT;
+//         }
+//
+//         tree->val.num  = tree->func_ptrs.calc_func(tree->left->val.num,
+//                                          tree->right->val.num);
+//         tree->left  = nullptr;
+//         tree->right = nullptr;
+//
+//         return DIFF_SUCCESS;
+//     }
+//     else
+//     {
+//         tree->val.num  = tree->func_ptrs.calc_func(tree->left->val.num, 0);
+//
+//         tree->left  = nullptr;
+//         tree->right = nullptr;
+//
+//         return DIFF_SUCCESS;
+//     }
+//
+//     //-------------------------------------------------------------------//
+//
     return DIFF_TRY_CALC_ERROR;
 }
 
@@ -429,31 +398,31 @@ bool is_equal(num_t n1, num_t n2)
 //===================================================================//
 
 diff_status_t get_derivative_in_point(diff_context_t* ctx,
-                                      node_t*         expression,
+                                      node_t**        expression,
                                       int             n_memb,
-                                      num_t*          coeffs,
+                                      node_t**        derivatives,
                                       num_t           point)
 {
     ASSERT(ctx);
 
     //-------------------------------------------------------------------//
 
-    print_tex(ctx, "\\centerline{Посчитаем %d производную}\n", n_memb);
+    print_tex(ctx, "\\begin{equation}\n"
+                   "{f}^{(%d)}(x) = ", n_memb);
 
-    expression = _QDIFF(expression);
+    // node_t* node = *expression;
 
-    //-------------------------------------------------------------------//
+    *expression = _QDIFF(_COPY((*expression)));
 
-    node_t* cp_expression = copy_tree(ctx, expression);
+    derivatives[n_memb] = *expression;
 
-    VERIFY(calc_in_point(cp_expression, 0) != DIFF_SUCCESS,
-           return DIFF_CALC_IN_POINT_ERROR);
+    // _METRIC(derivatives[n_memb]);
+    _TEX(derivatives[n_memb]);
 
-    print_tex(ctx, "\\centerline{В нуле она равна %lg}", cp_expression->val.num);
+    // renames_encrypt(ctx, node);
+    // renames_encrypt(ctx, derivatives[n_memb]);
 
-    //-------------------------------------------------------------------//
-
-    coeffs[n_memb] = cp_expression->val.num;
+    print_tex(ctx, "\\end{equation}");
 
     //-------------------------------------------------------------------//
 
@@ -465,12 +434,12 @@ diff_status_t get_derivative_in_point(diff_context_t* ctx,
 diff_status_t get_derivaties_in_point(diff_context_t* ctx,
                                       node_t*         expression,
                                       int             n,
-                                      num_t*          coeffs,
+                                      node_t**        derivatives,
                                       num_t           point)
 {
     ASSERT(ctx);
     ASSERT(expression);
-    ASSERT(coeffs);
+    ASSERT(derivatives);
 
     //-------------------------------------------------------------------//
 
@@ -478,14 +447,16 @@ diff_status_t get_derivaties_in_point(diff_context_t* ctx,
                    " тейлора до $\\tilde{o}(x^%d)$ вот такую функцию} "
                    "\n\\begin{equation}\n"
                    "f(x) = ", point, n);
+
     _TEX(expression);
+
     print_tex(ctx, "\n\\end{equation}\n");
 
     //-------------------------------------------------------------------//
 
-    for (int i = 0; i < n; i++)
+    for (int i = 1; i < n + 1; i++)
     {
-        get_derivative_in_point(ctx, expression, i + 1, coeffs, point);
+        get_derivative_in_point(ctx, &expression, i, derivatives, point);
     }
 
     //-------------------------------------------------------------------//
@@ -497,45 +468,128 @@ diff_status_t get_derivaties_in_point(diff_context_t* ctx,
 
 diff_status_t get_taylor_formula(diff_context_t* ctx, const int n, num_t* coeffs, num_t point)
 {
-    ASSERT(coeffs);
+//     ASSERT(coeffs);
+//
+//     //-------------------------------------------------------------------//
+//
+//     print_tex(ctx, "\\centerline{Формула Тейлора}"
+//                    "\n\\begin{equation}\n"
+//                    "f(x) = ");
+//
+//     //-------------------------------------------------------------------//
+//
+//     node_t* cp_root = copy_tree(ctx, ctx->root);
+//     calc_in_point(cp_root, coeffs[0]);
+//
+//     //-------------------------------------------------------------------//
+//
+//     char  buf[100] = {};
+//     char* buf_ptr = &buf[0];
+//     int nchars    = 0;
+//
+//     print_tex(ctx, "%lg", cp_root->val.num);
+//     sprintf(buf_ptr, "%lg%n", cp_root->val.num, &nchars);
+//     buf_ptr += nchars;
+//
+//     for (int i = 1; i < n + 1; i++)
+//     {
+//         print_tex(ctx, " + \\frac{%lg}{%d!}x^%d", coeffs[i], i, i);
+//         sprintf(buf_ptr, " + (x**%d)/((%lg)*(%d!))%n",
+//                 i, cp_root->val.num, i, &nchars);
+//         buf_ptr += nchars;
+//     }
+//
+//     print_tex(ctx, "\n\\end{equation}\n");
+//
+//     //-------------------------------------------------------------------//
+//
+//     char command[200] = {};
+//     sprintf(command, "gnuplot -p -e \"set terminal pngcairo; set output 'func.png'; plot %s", buf);
+//
+//     printf("%s", command);
+//     system(command);
+//
+//     //-------------------------------------------------------------------//
+//
+    return DIFF_SUCCESS;
+}
 
-    //-------------------------------------------------------------------//
+//===================================================================//
 
-    print_tex(ctx, "\\centerline{Формула Тейлора}"
-                   "\n\\begin{equation}\n"
-                   "f(x) = ");
-
-    //-------------------------------------------------------------------//
-
-    node_t* cp_root = copy_tree(ctx, ctx->root);
-    calc_in_point(cp_root, coeffs[0]);
-
-    //-------------------------------------------------------------------//
-
-    char  buf[100] = {};
-    char* buf_ptr = &buf[0];
-    int nchars    = 0;
-
-    print_tex(ctx, "%lg", cp_root->val.num);
-    sprintf(buf_ptr, "%lg%n", cp_root->val.num, &nchars);
-    buf_ptr += nchars;
-
-    for (int i = 1; i < n + 1; i++)
+int factorial(int n)
+{
+    int res = 1;
+    for (int i = 1; i <= n; i++)
     {
-        print_tex(ctx, " + \\frac{%lg}{%d!}x^%d", coeffs[i], i, i);
-        sprintf(buf_ptr, " + (x**%d)/((%lg)*(%d!))%n", i, cp_root->val.num, i, &nchars);
-        buf_ptr += nchars;
+        res *= i;
     }
 
-    print_tex(ctx, "\n\\end{equation}\n");
+    return res;
+}
+
+//===================================================================//
+
+node_t* create_taylor_tree(diff_context_t* ctx,
+                           node_t* root,
+                           const int n,
+                           node_t** derivatives,
+                           num_t point)
+{
+    ASSERT(ctx);
+    ASSERT(root);
 
     //-------------------------------------------------------------------//
 
-    char command[200] = {};
-    sprintf(command, "gnuplot -p -e \"set terminal pngcairo; set output 'func.png'; plot %s", buf);
+    node_allocator_t* node_allocator = ctx->node_allocator;
 
-    printf("%s", command);
-    system(command);
+    //-------------------------------------------------------------------//
+
+    node_t* taylor_tree = _NUM(calc_in_point(derivatives[0], point));
+
+    //-------------------------------------------------------------------//
+
+    for (int i = 1; i <= n; i++)
+    {
+        taylor_tree = _ADD(_COPY(taylor_tree),
+                           _DIV(_MUL(_NUM(calc_in_point(derivatives[i], point)),
+                                     _POW(_VAR(X), _NUM((num_t) i))),
+                                _NUM((num_t) factorial(i))));
+    }
+
+    _QSIMPLIFY(taylor_tree);
+
+    return taylor_tree;
+
+    //-------------------------------------------------------------------//
+}
+
+//===================================================================//
+
+diff_status_t taylor(diff_context_t* ctx, node_t* root, const int n, num_t point)
+{
+    ASSERT(ctx);
+    ASSERT(root);
+
+    //-------------------------------------------------------------------//
+
+    node_t* derivatives[n + 1] = {};
+    derivatives[0] = _COPY(root);
+
+    get_derivaties_in_point(ctx, root, n, derivatives, point);
+
+    node_t* taylor_tree = create_taylor_tree(ctx, root, n, derivatives, point);
+
+    ASSERT(taylor_tree);
+
+    print_tex(ctx, "\\centered{Итоговая формула разложения по Тейлору}\n");
+    print_tex(ctx, "\\begin{equation}"
+                   "f(x) = ");
+
+    _METRIC(taylor_tree);
+    _TEX(taylor_tree);
+
+    print_tex(ctx, " + \\tilde{o}(x^%d)\n"
+                   "\\end{equation}", n);
 
     //-------------------------------------------------------------------//
 
@@ -544,27 +598,37 @@ diff_status_t get_taylor_formula(diff_context_t* ctx, const int n, num_t* coeffs
 
 //===================================================================//
 
-diff_status_t taylor(diff_context_t* ctx, node_t* root)
+num_t calc_in_point(node_t* tree, num_t point)
 {
-    ASSERT(ctx);
-    ASSERT(root);
+    ASSERT(tree);
 
     //-------------------------------------------------------------------//
 
-    const int n         = 3;
-    num_t coeffs[n + 1] = {};
-    num_t point         = 0;
+    switch (tree->arg_type)
+    {
+        case NUM:
+        {
+            return tree->val.num;
+        }
+        case VAR:
+        {
+            return point;
+        }
+        case OPR:
+        {
+            num_t l_value = 0;
+            if (tree->left)  {l_value = calc_in_point(tree->left,  point);}
 
-    node_t* cp_expression = copy_tree(ctx, root);
-    coeffs[0] = calc_in_point(cp_expression, 0);
+            num_t r_value = 0;
+            if (tree->right) {r_value = calc_in_point(tree->right, point);}
 
-    get_derivaties_in_point(ctx, root, n, coeffs, point);
+            return tree->func_ptrs.calc_func(l_value, r_value);
+        }
 
-    get_taylor_formula(ctx, n, coeffs, point);
+        default: ASSERT(0);
+    }
 
-    //-------------------------------------------------------------------//
-
-    return DIFF_SUCCESS;
+    return DIFF_TRY_CALC_ERROR;
 }
 
 //———————————————————————————————————————————————————————————————————//

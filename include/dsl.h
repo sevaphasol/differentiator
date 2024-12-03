@@ -3,7 +3,7 @@
 
 #include "node_allocator.h"
 
-// #define _CALC(node)       node->calc_func(node->)
+#define _CALC(node)       node->calc_func(node->left.val.num, node->right ? node->val.num : 0)
 #define _DIFF(node)       node->func_ptrs.diff_func(ctx, node, LOUD)
 #define _QDIFF(node)      node->func_ptrs.diff_func(ctx, node, QUIET)
 #define _TEX(node)        node->func_ptrs.tex_func(ctx, node)

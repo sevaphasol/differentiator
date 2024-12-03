@@ -49,7 +49,6 @@
     _TEX(node);                                                       \
     _PRINT(") = ");                                                   \
                                                                       \
-    graph_dump(ctx, diffed_node);\
     _METRIC(diffed_node);                                             \
     _TEX(diffed_node);                                                \
                                                                       \
@@ -60,19 +59,18 @@
 #define _DIFF_FUNC_OUTRO                                              \
                                                                       \
     if (mode == QUIET)                                                \
+    {                                                                 \
         _QSIMPLIFY(diffed_node);                                      \
+    }                                                                 \
     else                                                              \
+    {                                                                 \
         _SIMPLIFY(diffed_node);                                       \
                                                                       \
-    int random_phrase = (int) random() % ctx->dump_info.n_phrases;    \
-                                                                      \
-    if (mode != QUIET)                                                \
-    {                                                                 \
+        int random_phrase = (int) random() % ctx->dump_info.n_phrases;\
         _TEX_STEP;                                                    \
+        renames_encrypt(ctx, node);                                   \
+        renames_encrypt(ctx, diffed_node);                            \
     }                                                                 \
-                                                                      \
-    renames_encrypt(ctx, node);                                       \
-    renames_encrypt(ctx, diffed_node);                                \
                                                                       \
     return diffed_node;                                               \
 
@@ -85,7 +83,6 @@ node_t* diff_##func_name(diff_context_t* ctx,                         \
                          exec_mode_t mode)                            \
 {                                                                     \
     _DIFF_FUNC_INTRO;                                                 \
-    \
     executing_code;                                                   \
     _DIFF_FUNC_OUTRO;                                                 \
 }                                                                     \
@@ -167,21 +164,30 @@ _DIFF_FUNC(pow,
     if (r->arg_type == NUM)
     {
         _RESULT = _MUL(_NUM(r->val.num),
-                       _MUL(_DIFF(l),
-                       _POW(_COPY(l),
-                            _NUM(r->val.num - 1))));
+                       _MUL(dl,
+                            _POW(_COPY(l),
+                                 _NUM(r->val.num - 1))));
     }
     else if (r_n_vars == 1 && l_n_vars == 0)
     {
         _RESULT = _MUL(_MUL(_COPY(node),
-                            _DIFF(r)),
+                            dr),
                        _LN(l));
     }
     else
     {
-        _RESULT = _MUL(_COPY(node),
-                       _DIFF(_MUL(_LN(_COPY(l)),
-                                  _COPY(r))));
+        if (mode == QUIET)
+        {
+            _RESULT = _MUL(_COPY(node),
+                           _QDIFF(_MUL(_LN(_COPY(l)),
+                                       _COPY(r))));
+        }
+        else
+        {
+            _RESULT = _MUL(_COPY(node),
+                           _DIFF(_MUL(_LN(_COPY(l)),
+                                      _COPY(r))));
+        }
     }
 )
 
@@ -196,8 +202,16 @@ _DIFF_FUNC(log,
     }
     else
     {
-        _RESULT = _DIFF(_DIV(_LN(_COPY(r)),
-                             _LN(_COPY(l))));
+        if (mode == QUIET)
+        {
+            _RESULT = _QDIFF(_DIV(_LN(_COPY(r)),
+                                  _LN(_COPY(l))));
+        }
+        else
+        {
+            _RESULT = _DIFF(_DIV(_LN(_COPY(r)),
+                                 _LN(_COPY(l))));
+        }
     }
 )
 

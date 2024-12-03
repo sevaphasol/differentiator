@@ -41,16 +41,18 @@
                                                                       \
     if (simplified)                                                   \
     {                                                                 \
-        _PRINT("Упростим\n");                                         \
-        _PRINT("\\begin{equation}\n");                                \
+        if (mode != QUIET)                                            \
+        {                                                             \
+            _PRINT("Упростим\n");                                     \
+            _PRINT("\\begin{equation}\n");                            \
                                                                       \
-        graph_dump(ctx, node);\
-        _TEX(node);                                                   \
-        _PRINT(" = ");                                                \
+            _TEX(node);                                               \
+            _PRINT(" = ");                                            \
                                                                       \
-        _TEX(simplified_node);                                        \
+            _TEX(simplified_node);                                    \
                                                                       \
-        _PRINT("\n\\end{equation}\n");                                \
+            _PRINT("\n\\end{equation}\n");                            \
+        }                                                             \
                                                                       \
         *node = *simplified_node;                                     \
     }                                                                 \
@@ -82,7 +84,6 @@ if (l && l->arg_type == NUM &&                                        \
     }                                                                 \
     else                                                              \
     {                                                                 \
-                                                                      \
         _PRINT("Посчитаем\n");                                        \
         _PRINT("\\begin{equation}\n");                                \
                                                                       \

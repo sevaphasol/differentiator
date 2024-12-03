@@ -202,8 +202,8 @@ diff_status_t try_calc              (node_t* tree);
 node_t*       diff_tree             (diff_context_t* ctx, node_t* root);
 diff_status_t try_calc_opr_in_point (node_t* tree, num_t point);
 diff_status_t derivative            (diff_context_t* ctx, node_t* root);
-diff_status_t taylor                (diff_context_t* ctx, node_t* root);
-diff_status_t calc_in_point         (node_t* tree, num_t point);
+diff_status_t taylor                (diff_context_t* ctx, node_t* root, int n, num_t point);
+num_t         calc_in_point         (node_t* tree, num_t point);
 bool          is_equal              (num_t n1, num_t n2);
 diff_status_t count_n_vars          (diff_context_t* ctx,
                                      node_t* node,

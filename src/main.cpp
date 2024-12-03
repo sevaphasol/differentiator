@@ -25,7 +25,7 @@ int main()
 
     //-------------------------------------------------------------------//
 
-    VERIFY(derivative(&ctx, root) != DIFF_SUCCESS,
+    VERIFY(taylor(&ctx, root, 5, 0) != DIFF_SUCCESS,
            return EXIT_FAILURE)
 
     //-------------------------------------------------------------------//
