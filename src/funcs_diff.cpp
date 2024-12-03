@@ -163,9 +163,9 @@ _DIFF_FUNC(pow,
     else
     {
         _RESULT = _MUL(_POW(_COPY(l),
-                            dr),
+                            _COPY(dr)),
                        _DIFF(_MUL(_LN(_COPY(l)),
-                                  dr)));
+                                  _COPY(dr))));
     }
 )
 

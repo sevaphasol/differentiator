@@ -15,21 +15,18 @@
 
 //———————————————————————————————————————————————————————————————————//
 
-static tree_dump_status_t make_edges     (node_t* node,
-                                          FILE*   file,
-                                          int*    node_number);
+static tree_dump_status_t dot_file_init  (FILE*       dot_file);
 
-static tree_dump_status_t make_node      (node_t* node,
-                                          FILE* file,
-                                          int* node_number);
+static tree_dump_status_t make_edges     (node_t*     node,
+                                          FILE*       file,
+                                          int*        node_number);
+
+static tree_dump_status_t make_elem      (node_t*     node,
+                                          FILE*       file,
+                                          int*        node_number);
 
 static tree_dump_status_t create_png     (const char* dot_file_name,
                                           const char* png_file_name);
-
-static tree_dump_status_t get_file_name  (char* file_name,
-                                          int file_number);
-
-static tree_dump_status_t dot_file_init  (FILE* dot_file);
 
 //———————————————————————————————————————————————————————————————————//
 
@@ -40,7 +37,9 @@ tree_dump_status_t graph_dump(diff_context_t* ctx, node_t* root)
     //-------------------------------------------------------------------//
 
     char dot_file_name[FileNameBufSize] = {};
-    get_file_name(dot_file_name, ctx->dump_info.n_dumps);
+    snprintf(dot_file_name, FileNameBufSize,
+             LOGS_DIR "/" DOTS_DIR "/" "%03d.dot",
+             ctx->dump_info.n_dumps);
 
     FILE* dot_file = fopen(dot_file_name, "w");
     VERIFY(!dot_file, return TREE_DUMP_FILE_OPEN_ERROR);
@@ -58,30 +57,15 @@ tree_dump_status_t graph_dump(diff_context_t* ctx, node_t* root)
     //-------------------------------------------------------------------//
 
     char png_file_name[FileNameBufSize] = {};
-    get_file_name(png_file_name, ctx->dump_info.n_dumps);
+    snprintf(png_file_name, FileNameBufSize,
+             LOGS_DIR "/" IMGS_DIR "/" "%03d.png",
+             ctx->dump_info.n_dumps);
 
     create_png(dot_file_name, png_file_name);
 
     //-------------------------------------------------------------------//
 
     ctx->dump_info.n_dumps++;
-
-    //-------------------------------------------------------------------//
-
-    return TREE_DUMP_SUCCESS;
-}
-
-//===================================================================//
-
-tree_dump_status_t get_file_name(char* file_name, int file_number)
-{
-    ASSERT(file_name);
-
-    //-------------------------------------------------------------------//
-
-    snprintf(file_name, FileNameBufSize,
-             LOGS_DIR "/" DOTS_DIR "/" "%03d.dot",
-             file_number);
 
     //-------------------------------------------------------------------//
 
@@ -112,20 +96,62 @@ tree_dump_status_t dot_file_init(FILE* dot_file)
     return TREE_DUMP_SUCCESS;
 }
 
-tree_dump_status_t create_png(const char* dot_file_name,
-                              const char* png_file_name)
+//===================================================================//
+
+tree_dump_status_t make_elem(node_t* node, FILE* file, int* node_number)
 {
-    ASSERT(dot_file_name);
-    ASSERT(png_file_name);
+    ASSERT(node);
+    ASSERT(file);
+    ASSERT(node_number);
 
     //-------------------------------------------------------------------//
 
-    char command[SysCommandBufSize] = {};
-    snprintf(command, SysCommandBufSize, "touch %s; dot %s -Tpng -o %s",
-             png_file_name, dot_file_name, png_file_name);
-
-    VERIFY(!system(command),
-           return TREE_DUMP_SYSTEM_COMMAND_ERROR);
+    switch(node->arg_type)
+    {
+        case NUM:
+        {
+            fprintf(file, "elem%p["
+                "shape=\"Mrecord\", "
+                "label= \"{%s | val = %lg | metrics = %d | name = %c}\""
+                "];\n",
+                node,
+                "NUM",
+                node->val.num,
+                node->alias.metrics,
+                node->alias.name);
+            break;
+        }
+        case VAR:
+        {
+            fprintf(file, "elem%p["
+                "shape=\"Mrecord\", "
+                "label= \"{%s | val = %s | metrics = %d | name = %c}\""
+                "];\n",
+                node,
+                "VAR",
+                "x",
+                node->alias.metrics,
+                node->alias.name);
+            break;
+        }
+        case OPR:
+        {
+            fprintf(file, "elem%p["
+                "shape=\"Mrecord\", "
+                "label= \"{%s | val = %s | metrics = %d | name = %c}\""
+                "];\n",
+                node,
+                "OPR",
+                OperationsTable[node->val.opr].name,
+                node->alias.metrics,
+                node->alias.name);
+            break;
+        }
+        default:
+        {
+            break;
+        }
+    }
 
     //-------------------------------------------------------------------//
 
@@ -142,7 +168,7 @@ tree_dump_status_t make_edges(node_t* node, FILE* file, int* node_number)
 
     //-------------------------------------------------------------------//
 
-    make_node(node, file, node_number);
+    make_elem(node, file, node_number);
 
     //-------------------------------------------------------------------//
 
@@ -156,6 +182,12 @@ tree_dump_status_t make_edges(node_t* node, FILE* file, int* node_number)
                       node, node->left);
 
         make_edges(node->left, file, node_number);
+    }
+
+    if (node->right)
+    {
+        int right_node_number = ++*node_number;
+
         fprintf(file, "elem%p->elem%p;",
                        node, node->right);
 
@@ -169,62 +201,20 @@ tree_dump_status_t make_edges(node_t* node, FILE* file, int* node_number)
 
 //===================================================================//
 
-tree_dump_status_t make_node(node_t* node, FILE* file, int* node_number)
+tree_dump_status_t create_png(const char* dot_file_name,
+                              const char* png_file_name)
 {
-    ASSERT(node);
-    ASSERT(file);
-    ASSERT(node_number);
+    ASSERT(dot_file_name);
+    ASSERT(png_file_name);
 
     //-------------------------------------------------------------------//
 
-    switch(node->arg_type)
-    {
-        case NUM:
-        {
-            fprintf(file, "elem%d["
-                          "shape=\"Mrecord\", "
-                          "label= \"{%s | val = %lg |"
-                          " metrics = %d | name = %c}\"];\n",
-                          *node_number,
-                          "NUM",
-                          node->val.num,
-                          node->alias.metrics,
-                          node->alias.name);
-            break;
-        }
-        case VAR:
-        {
-            fprintf(file, "elem%d["
-                          "shape=\"Mrecord\", "
-                          "label= \"{%s | val = %s |"
-                          " metrics = %d | name = %c}\"];\n",
-                          *node_number,
-                          "VAR",
-                          "x",
-                          node->alias.metrics,
-                          node->alias.name);
-            break;
-        }
-        case OPR:
-        {
-            fprintf(file, "elem%d["
-                          "shape=\"Mrecord\", "
-                          "label= \"{%s | val = %s |"
-                          " metrics = %d | name = %c}\"];\n",
-                          *node_number,
-                          "OPR",
-                          OperationsTable[node->val.opr].name,
-                          node->alias.metrics,
-                          node->alias.name);
-            break;
-        }
-        default:
-        {
-            ASSERT(!"make node error");
+    char command[SysCommandBufSize] = {};
+    snprintf(command, SysCommandBufSize, "touch %s; dot %s -Tpng -o %s",
+             png_file_name, dot_file_name, png_file_name);
 
-            break;
-        }
-    }
+    VERIFY(system(command),
+           return TREE_DUMP_SYSTEM_COMMAND_ERROR);
 
     //-------------------------------------------------------------------//
 

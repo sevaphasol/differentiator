@@ -7,12 +7,13 @@
 //———————————————————————————————————————————————————————————————————//
 
 // const char* const Expression = "(/(1)(^(x)(1)))";
-// const char* const Expression = "(*(+(arctan(x))(-(sinh(^(x)(2)))(sqrt(^(x)(2)))))(sinh(cosh(ln(x)))))";
+// const char* const Expression = "(*(*(arctan(x))(-(sinh(^(x)(2)))(sqrt(^(x)(2)))))(sinh(cosh(ln(x)))))";
 // const char* const Expression = "(+(+(x)(x))(0))";
+const char* const Expression = "(+(*(2)(x))(*(3)(x)))";
 // const char* const Expression = "(sqrt(-(^(x)(2))(1))))";
 // const char* const Expression = "(^(*(sqrt(+(1)(x)))(ln(+(1)(x))))(sin(x)))";
 // const char* const Expression = "(*(ln(+(1)(x))(sqrt(+(1)(sin(x)))))";
-const char* const Expression = "(sqrt(^(x)(2)))";
+// const char* const Expression = "(sqrt(^(x)(2)))";
 // const char* const Expression = "(^(x)(3))";
 // const char* const Expression = "(*(/(x)(sin(x)))(x))";
 

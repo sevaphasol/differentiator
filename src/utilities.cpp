@@ -41,8 +41,8 @@ diff_status_t derivative(diff_context_t* ctx, node_t* root)
     //-------------------------------------------------------------------//
 
     node_t* first  = diff_tree(ctx, root);
-    node_t* second = diff_tree(ctx, first);
-    node_t* third  = diff_tree(ctx, second);
+    // node_t* second = diff_tree(ctx, first);
+    // node_t* third  = diff_tree(ctx, second);
 
     //-------------------------------------------------------------------//
 

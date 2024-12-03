@@ -112,6 +112,12 @@ node_t* node_ctor(node_allocator_t* allocator,
 
     //-------------------------------------------------------------------//
 
+    new_node->alias.name    = 'n';
+    new_node->alias.renamed = false;
+    new_node->alias.metrics = 0;
+
+    //-------------------------------------------------------------------//
+
     return new_node;
 }
 
