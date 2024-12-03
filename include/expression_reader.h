@@ -7,12 +7,24 @@
 
 //———————————————————————————————————————————————————————————————————//
 
-struct diff_io_context_t
-{
-    int   n_chars;
-    char* buf[10];
-    node_allocator_t* node_allocator;
-};
+// 15*sin(5x^3) + cos^3(15x)
+
+const char* const Expression = "(/(*(arctan(x))(-(sinh(^(x)(2)))(sqrt(^(x)(2)))))(sinh(cosh(ln(x)))))";
+// const char* const Expression = "(+(*(15)(sin(*(5)(^(x)(3)))))(^(cos(*(15)(x)))(3)))";
+// const char* const Expression = "(/(1)(^(x)(1)))";
+// const char* const Expression = "(arccoth(x))";
+// const char* const Expression = "(^(^(x)(x))(x))";
+// const char* const Expression = "(log(2)(^(2)(x)))";
+// const char* const Expression = "(sin(arcsin(x)))";
+// const char* const Expression = "(log(x)(x))";
+// const char* const Expression = "(+(+(x)(x))(0))";
+// const char* const Expression = "(+(*(2)(x))(*(3)(x)))";
+// const char* const Expression = "(sqrt(-(^(x)(2))(1))))";
+// const char* const Expression = "(^(*(sqrt(+(1)(x)))(ln(+(1)(x))))(sin(x)))";
+// const char* const Expression = "(*(ln(+(1)(x))(sqrt(+(1)(sin(x)))))";
+// const char* const Expression = "(sqrt(^(x)(2)))";
+// const char* const Expression = "(^(2)(-(x)(1))))";
+// const char* const Expression = "(*(/(x)(sin(x)))(x))";
 
 //———————————————————————————————————————————————————————————————————//
 

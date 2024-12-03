@@ -3,6 +3,7 @@
 #include "operations.h"
 #include "tex_dump.h"
 #include "node_allocator.h"
+#include "graph_dump.h"
 
 //———————————————————————————————————————————————————————————————————//
 
@@ -26,6 +27,7 @@
     node_allocator_t* node_allocator = ctx->node_allocator;           \
     node_t *l, *r, *dl, *dr, *diffed_node;                            \
                                                                       \
+                                                                      \
     (mode == QUIET) ? _QSIMPLIFY(node) : _SIMPLIFY(node);             \
                                                                       \
     l = node->left;                                                   \
@@ -47,6 +49,7 @@
     _TEX(node);                                                       \
     _PRINT(") = ");                                                   \
                                                                       \
+    graph_dump(ctx, diffed_node);\
     _METRIC(diffed_node);                                             \
     _TEX(diffed_node);                                                \
                                                                       \
@@ -82,6 +85,7 @@ node_t* diff_##func_name(diff_context_t* ctx,                         \
                          exec_mode_t mode)                            \
 {                                                                     \
     _DIFF_FUNC_INTRO;                                                 \
+    \
     executing_code;                                                   \
     _DIFF_FUNC_OUTRO;                                                 \
 }                                                                     \
@@ -132,14 +136,14 @@ _DIFF_FUNC(sub,
 
 _DIFF_FUNC(mul,
     _RESULT = _ADD(_MUL(dl, _COPY(r)),
-                   _MUL(dr,  _COPY(l)));
+                   _MUL(dr, _COPY(l)));
 )
 
 //===================================================================//
 
 _DIFF_FUNC(div,
-    _RESULT = _DIV(_SUB(_MUL(dl, _COPY(r)),
-                        _MUL(dr, _COPY(l))),
+    _RESULT = _DIV(_SUB(_MUL(dl,  _COPY(r)),
+                        _MUL(dr,  _COPY(l))),
                    _POW(_COPY(r), _NUM(2)));
 )
 
@@ -154,18 +158,30 @@ _DIFF_FUNC(sqrt,
 //===================================================================//
 
 _DIFF_FUNC(pow,
+    int l_n_vars = 0;
+    ASSERT(count_n_vars(ctx, node->left,  &l_n_vars) == DIFF_SUCCESS);
+
+    int r_n_vars = 0;
+    ASSERT(count_n_vars(ctx, node->right, &r_n_vars) == DIFF_SUCCESS);
+
     if (r->arg_type == NUM)
     {
         _RESULT = _MUL(_NUM(r->val.num),
+                       _MUL(_DIFF(l),
                        _POW(_COPY(l),
-                            _NUM(r->val.num - 1)));
+                            _NUM(r->val.num - 1))));
+    }
+    else if (r_n_vars == 1 && l_n_vars == 0)
+    {
+        _RESULT = _MUL(_MUL(_COPY(node),
+                            _DIFF(r)),
+                       _LN(l));
     }
     else
     {
-        _RESULT = _MUL(_POW(_COPY(l),
-                            _COPY(dr)),
+        _RESULT = _MUL(_COPY(node),
                        _DIFF(_MUL(_LN(_COPY(l)),
-                                  _COPY(dr))));
+                                  _COPY(r))));
     }
 )
 

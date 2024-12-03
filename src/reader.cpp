@@ -155,7 +155,8 @@ node_t* get_tree(node_allocator_t* node_allocator,
                                &diff_num,
                                &tex_num,
                                &simplify_num,
-                               &metric_num },
+                               &metric_num,
+                               &plot_num },
                             nullptr, nullptr);
         }
         case VAR:
@@ -166,7 +167,8 @@ node_t* get_tree(node_allocator_t* node_allocator,
                                &diff_var,
                                &tex_var,
                                &simplify_var,
-                               &metric_var },
+                               &metric_var,
+                               &plot_var },
                              nullptr, nullptr);
         }
         case OPR:

@@ -10,6 +10,7 @@
 #define _SIMPLIFY(node)   node->func_ptrs.simplify_func(ctx, node, LOUD)
 #define _QSIMPLIFY(node)  node->func_ptrs.simplify_func(ctx, node, QUIET)
 #define _METRIC(node)     node->func_ptrs.metric_func(ctx, node)
+#define _PLOT(node)       node->func_ptrs.plot_func(ctx, node)
 #define _COPY(node)       copy_tree(ctx, node)
 
 #define _NUM(_num)        node_ctor(node_allocator, NUM, {.num = _num},    {nullptr,       &diff_num,     &tex_num,     &simplify_num,     &metric_num    }, nullptr, nullptr)

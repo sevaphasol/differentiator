@@ -36,6 +36,8 @@ enum diff_status_t
     DIFF_TRY_CALC_ERROR             = 11,
     DIFF_TEX_ERROR                  = 12,
     DIFF_CALC_IN_POINT_ERROR        = 13,
+    DIFF_TOO_LONG_EXPRESSION_ERROR  = 14,
+    DIFF_COUNT_N_VARS_ERROR         = 15,
 };
 
 //———————————————————————————————————————————————————————————————————//
@@ -137,6 +139,8 @@ struct dump_info_t
     char*             phrases_buf;
     char**            phrases;
     int               n_phrases;
+    FILE*             plots_file;
+    const char*       plots_file_name;
 };
 
 //-------------------------------------------------------------------//
@@ -167,6 +171,7 @@ struct node_func_ptrs_t
     void       (*tex_func)      (diff_context_t* context, node_t* node);
     void       (*simplify_func) (diff_context_t* context, node_t* node, exec_mode_t mode);
     int        (*metric_func)   (diff_context_t* ctx, node_t* node);
+    void       (*plot_func)     (diff_context_t* ctx, node_t* node);
 };
 
 //———————————————————————————————————————————————————————————————————//
@@ -190,16 +195,19 @@ struct node_t
 
 //———————————————————————————————————————————————————————————————————//
 
-diff_status_t diff_context_ctor (diff_context_t* ctx, node_allocator_t* node_allocator);
-diff_status_t diff_context_dtor (diff_context_t* ctx);
-node_t*       copy_tree         (diff_context_t* ctx, node_t* root);
-diff_status_t try_calc          (node_t* tree);
-node_t*       diff_tree         (diff_context_t* ctx, node_t* root);
-diff_status_t try_calc_opr      (node_t* tree, num_t point);
-diff_status_t derivative        (diff_context_t* ctx, node_t* root);
-diff_status_t taylor            (diff_context_t* ctx, node_t* root);
-diff_status_t calc_in_point     (node_t* tree, num_t point);
-bool          is_equal          (num_t n1, num_t n2);
+diff_status_t diff_context_ctor     (diff_context_t* ctx, node_allocator_t* node_allocator);
+diff_status_t diff_context_dtor     (diff_context_t* ctx);
+node_t*       copy_tree             (diff_context_t* ctx, node_t* root);
+diff_status_t try_calc              (node_t* tree);
+node_t*       diff_tree             (diff_context_t* ctx, node_t* root);
+diff_status_t try_calc_opr_in_point (node_t* tree, num_t point);
+diff_status_t derivative            (diff_context_t* ctx, node_t* root);
+diff_status_t taylor                (diff_context_t* ctx, node_t* root);
+diff_status_t calc_in_point         (node_t* tree, num_t point);
+bool          is_equal              (num_t n1, num_t n2);
+diff_status_t count_n_vars          (diff_context_t* ctx,
+                                     node_t* node,
+                                     int* res);
 
 //———————————————————————————————————————————————————————————————————//
 

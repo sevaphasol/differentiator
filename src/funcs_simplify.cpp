@@ -29,8 +29,6 @@
     node_t* r                        = node->right;                   \
     node_t* simplified_node          = nullptr;                       \
                                                                       \
-    graph_dump(ctx, node);\
-                                                                      \
     if (l) {(mode == QUIET) ? _QSIMPLIFY(l) : _SIMPLIFY(l);}          \
     if (r) {(mode == QUIET) ? _QSIMPLIFY(r) : _SIMPLIFY(r);}          \
                                                                       \
@@ -46,6 +44,7 @@
         _PRINT("Упростим\n");                                         \
         _PRINT("\\begin{equation}\n");                                \
                                                                       \
+        graph_dump(ctx, node);\
         _TEX(node);                                                   \
         _PRINT(" = ");                                                \
                                                                       \
@@ -55,6 +54,8 @@
                                                                       \
         *node = *simplified_node;                                     \
     }                                                                 \
+                                                                      \
+    _TRY_CALC(node);                                                  \
 
 //===================================================================//
 
@@ -77,17 +78,19 @@ if (l && l->arg_type == NUM &&                                        \
 {                                                                     \
     if (mode == QUIET)                                                \
     {                                                                 \
-        *node = *_NUM(node->func_ptrs.calc_func(l->val.num, r->val.num));                                               \
+        try_calc(node);                                               \
     }                                                                 \
     else                                                              \
     {                                                                 \
+                                                                      \
         _PRINT("Посчитаем\n");                                        \
         _PRINT("\\begin{equation}\n");                                \
                                                                       \
+        graph_dump(ctx, node);\
         _TEX(node);                                                   \
         _PRINT(" = ");                                                \
                                                                       \
-        *node = *_NUM(node->func_ptrs.calc_func(l->val.num, r->val.num));                                               \
+        try_calc(node);                                               \
         _TEX(node);                                                   \
                                                                       \
         _PRINT("\n\\end{equation}\n");                                \
@@ -150,7 +153,7 @@ _SIMPLIFY_FUNC(add,
 //===================================================================//
 
 _SIMPLIFY_FUNC(sub,
-    _IF_LEFT(0, _MUL(_NUM(-1), r))
+    _IF_LEFT (0, _MUL(_NUM(-1), r))
     _IF_RIGHT(0, l)
 )
 
@@ -174,16 +177,6 @@ _SIMPLIFY_FUNC(div,
 //===================================================================//
 
 _SIMPLIFY_FUNC(sqrt,
-    if (l->arg_type        == OPR &&
-        l->val.opr         == POW &&
-        l->right                  &&
-        l->right->arg_type == NUM &&
-        is_equal(l->right->val.num, 2))
-    {
-        simplified_node = l->left;
-        // there should be a module here but I'm not a mathematician
-        simplified = true;
-    }
 )
 
 //===================================================================//

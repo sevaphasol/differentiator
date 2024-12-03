@@ -12,12 +12,20 @@
 #include "node_allocator.h"
 #include "custom_assert.h"
 #include "dsl.h"
+#include "plot_dump.h"
 
 //———————————————————————————————————————————————————————————————————//
 
-static diff_status_t      phrases_strings_ctor    (dump_info_t* dump_info);
-static int                count_number_of_strings (char* text);
-static diff_status_t      get_file_size(FILE* fp, size_t* size);
+static diff_status_t phrases_strings_ctor    (dump_info_t* dump_info);
+
+static int           count_number_of_strings (char* text);
+
+static diff_status_t get_file_size           (FILE* fp,
+                                              size_t* size);
+
+static diff_status_t print_graphic           (diff_context_t* ctx,
+                                              node_t* node,
+                                              const char* file_name);
 
 //———————————————————————————————————————————————————————————————————//
 
@@ -35,7 +43,7 @@ diff_status_t renames_encrypt(diff_context_t* ctx, node_t* node)
 
     if (node->alias.renamed)
     {
-        _PRINT("$$Где %c = ", node->alias.name);
+        _PRINT("$$%c = ", node->alias.name);
         node->alias.renamed = false;
         _TEX(node);
         _PRINT("$$\n");
@@ -72,7 +80,28 @@ diff_status_t print_tex(diff_context_t* ctx, const char* str, ...)
 
 //===================================================================//
 
-diff_status_t write_derivative_tex_intro(diff_context_t* ctx)
+diff_status_t print_graphic(diff_context_t* ctx,
+                            node_t* node,
+                            const char* file_name)
+{
+    ASSERT(ctx);
+    ASSERT(node);
+
+    //-------------------------------------------------------------------//
+
+    plot_dump(ctx, node, file_name);
+    print_tex(ctx, "\\begin{center}\n"
+                   "\\includegraphics[scale=0.5]{%s}\n"
+                   "\\end{center}\n", file_name);
+
+    //-------------------------------------------------------------------//
+
+    return DIFF_SUCCESS;
+}
+
+//===================================================================//
+
+diff_status_t write_derivative_tex_intro(diff_context_t* ctx, node_t* node)
 {
     ASSERT(ctx);
 
@@ -87,12 +116,16 @@ diff_status_t write_derivative_tex_intro(diff_context_t* ctx)
 
     //-------------------------------------------------------------------//
 
+    print_graphic(ctx, node, "start_func.png");
+
+    //-------------------------------------------------------------------//
+
     return DIFF_SUCCESS;
 }
 
 //===================================================================//
 
-diff_status_t write_derivative_tex_outro(diff_context_t* ctx)
+diff_status_t write_derivative_tex_outro(diff_context_t* ctx, node_t* node)
 {
     ASSERT(ctx);
 

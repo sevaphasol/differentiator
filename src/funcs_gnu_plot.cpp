@@ -1,22 +1,20 @@
 #include "operations.h"
 #include "dsl.h"
 #include "custom_assert.h"
+#include "math.h"
 
 //———————————————————————————————————————————————————————————————————//
 
-//////////////////////////////////////////////////
-//////////////////////////////////////////////////
 //////////////////////////////////////////////////
 ////////////////ADDITIONAL MACROS/////////////////
 ///////////////FOR DEFINING FUNCS/////////////////
-///////////////WRITING IN TEX FILE////////////////
-//////////////////////////////////////////////////
-//////////////////////////////////////////////////
+////////////////WRITING GNU PLOT//////////////////
+///////////////FORMAT EXPRESSION//////////////////
 //////////////////////////////////////////////////
 
 //———————————————————————————————————————————————————————————————————//
 
-#define _TEX_FUNC_INTRO                                               \
+#define _PLOT_FUNC_INTRO                                              \
                                                                       \
     ASSERT(ctx);                                                      \
     ASSERT(node);                                                     \
@@ -24,20 +22,14 @@
     node_t* l = node->left;                                           \
     node_t* r = node->right;                                          \
                                                                       \
-    if (node->alias.renamed)                                          \
-    {                                                                 \
-        _PUTC(node->alias.name);                                      \
-                                                                      \
-        return;                                                       \
-    }                                                                 \
 
 //===================================================================//
 
-#define _TEX_FUNC(func_name, executing_code)                          \
+#define _PLOT_FUNC(func_name, executing_code)                         \
                                                                       \
-void tex_##func_name(diff_context_t* ctx, node_t* node)               \
+void plot_##func_name(diff_context_t* ctx, node_t* node)              \
 {                                                                     \
-    _TEX_FUNC_INTRO;                                                  \
+    _PLOT_FUNC_INTRO;                                                 \
     executing_code;                                                   \
 }                                                                     \
 
@@ -57,11 +49,11 @@ void tex_##func_name(diff_context_t* ctx, node_t* node)               \
 
 //===================================================================//
 
-#define _PRINT(...) fprintf(ctx->dump_info.tex_file, ##__VA_ARGS__)
+#define _PRINT(...) fprintf(ctx->dump_info.plots_file, ##__VA_ARGS__)
 
 //-------------------------------------------------------------------//
 
-#define _PUTC(symb) fputc(symb, ctx->dump_info.tex_file)
+#define _PUTC(symb) fputc(symb, ctx->dump_info.plots_file)
 
 //———————————————————————————————————————————————————————————————————//
 
@@ -75,197 +67,205 @@ void tex_##func_name(diff_context_t* ctx, node_t* node)               \
 
 //———————————————————————————————————————————————————————————————————//
 
-_TEX_FUNC(num,
+_PLOT_FUNC(num,
     _PRINT("%lg", node->val.num);
 )
 
 //===================================================================//
 
-_TEX_FUNC(var,
+_PLOT_FUNC(var,
     _PUTC(VarsTable[node->val.var].name);
 )
 
 //===================================================================//
 
-_TEX_FUNC(add,
-    _TEX(l);
+_PLOT_FUNC(add,
+    _PLOT(l);
     _PUTC('+');
-    _TEX(r);
+    _PLOT(r);
 )
 
 //===================================================================//
 
-_TEX_FUNC(sub,
-    _TEX(l);
+_PLOT_FUNC(sub,
+    _PLOT(l);
     _PUTC('-');
-    _TEX(r);
+    _PLOT(r);
 )
 
 //===================================================================//
 
-_TEX_FUNC(mul,
-    _TEX(l);
-    if (!(l->arg_type == NUM && r->arg_type == VAR))
-    {
-        _PRINT(" \\cdot ");
-    }
-    _TEX(r);
+_PLOT_FUNC(mul,
+    _IN_PARENT(_PLOT(l));
+    _PRINT("*");
+    _IN_PARENT(_PLOT(r));
 )
 
 //===================================================================//
 
-_TEX_FUNC(div,
-    _PRINT("\\frac");
-    _IN_BRACES(_TEX(l));
-    _IN_BRACES(_TEX(r));
+_PLOT_FUNC(div,
+    _IN_PARENT(_PLOT(l));
+    _PRINT("/");
+    _IN_PARENT(_PLOT(r));
 )
 
 //===================================================================//
 
-_TEX_FUNC(sqrt,
-    _PRINT("\\sqrt");
-    _IN_BRACES(_TEX(l));
+_PLOT_FUNC(sqrt,
+    _PRINT("sqrt");
+    _IN_PARENT(_PLOT(l));
 )
 
 //===================================================================//
 
-_TEX_FUNC(pow,
-    _IN_BRACES(_TEX(l));
-    _PUTC('^');
-    _IN_BRACES(_TEX(r));
+_PLOT_FUNC(pow,
+    _IN_PARENT(_PLOT(l));
+    _PRINT("**");
+    _IN_PARENT(_PLOT(r));
 )
 
 //===================================================================//
 
-_TEX_FUNC(log,
-    _PRINT("\\log_");
-    _TEX(l);
-    _IN_PARENT(_TEX(r));
+_PLOT_FUNC(log,
+    _PRINT("log_");
+    _PLOT(l);
+    _IN_PARENT(_PLOT(r));
 )
 
 //===================================================================//
 
-_TEX_FUNC(ln,
-    _PRINT("\\ln");
-    _IN_PARENT(_TEX(l));
+_PLOT_FUNC(ln,
+    _PRINT("log");
+    _IN_PARENT(_PLOT(l));
 )
 
 //===================================================================//
 
-_TEX_FUNC(sin,
-    _PRINT("\\sin");
-    _IN_PARENT(_TEX(l));
+_PLOT_FUNC(sin,
+    _PRINT("sin");
+    _IN_PARENT(_PLOT(l));
 )
 
 //===================================================================//
 
-_TEX_FUNC(cos,
-    _PRINT("\\cos");
-    _IN_PARENT(_TEX(l));
+_PLOT_FUNC(cos,
+    _PRINT("cos");
+    _IN_PARENT(_PLOT(l));
 )
 
 //===================================================================//
 
-_TEX_FUNC(tan,
-    _PRINT("\\tan");
-    _IN_PARENT(_TEX(l));
+_PLOT_FUNC(tan,
+    _PRINT("tan");
+    _IN_PARENT(_PLOT(l));
 )
 
 //===================================================================//
 
-_TEX_FUNC(cot,
-    _PRINT("\\cot");
-    _IN_PARENT(_TEX(l));
+_PLOT_FUNC(cot,
+    _IN_PARENT(
+        _PRINT("1/tan");
+        _IN_PARENT(_PLOT(l));
+              );
 )
 
 //===================================================================//
 
-_TEX_FUNC(arcsin,
-    _PRINT("\\arcsin");
-    _IN_PARENT(_TEX(l));
+_PLOT_FUNC(arcsin,
+    _PRINT("asin");
+    _IN_PARENT(_PLOT(l));
 )
 
 //===================================================================//
 
-_TEX_FUNC(arccos,
-    _PRINT("\\arccos");
-    _IN_PARENT(_TEX(l));
+_PLOT_FUNC(arccos,
+    _PRINT("acos");
+    _IN_PARENT(_PLOT(l));
 )
 
 //===================================================================//
 
-_TEX_FUNC(arctan,
-    _PRINT("\\arctan");
-    _IN_PARENT(_TEX(l));
+_PLOT_FUNC(arctan,
+    _PRINT("atan");
+    _IN_PARENT(_PLOT(l));
 )
 
 //===================================================================//
 
-_TEX_FUNC(arccot,
-    _PRINT("\\arccot");
-    _IN_PARENT(_TEX(l));
+_PLOT_FUNC(arccot,
+    _IN_PARENT(
+        _PRINT("%lf - atan", M_PI_2);
+        _IN_PARENT(_PLOT(l));
+              );
 )
 
 //===================================================================//
 
-_TEX_FUNC(sinh,
-    _PRINT("\\sinh");
-    _IN_PARENT(_TEX(l));
+_PLOT_FUNC(sinh,
+    _PRINT("sinh");
+    _IN_PARENT(_PLOT(l));
 )
 
 //===================================================================//
 
-_TEX_FUNC(cosh,
-    _PRINT("\\cosh");
-    _IN_PARENT(_TEX(l));
+_PLOT_FUNC(cosh,
+    _PRINT("cosh");
+    _IN_PARENT(_PLOT(l));
 )
 
 //===================================================================//
 
-_TEX_FUNC(tanh,
-    _PRINT("\\tanh");
-    _IN_PARENT(_TEX(l));
+_PLOT_FUNC(tanh,
+    _PRINT("tanh");
+    _IN_PARENT(_PLOT(l));
 )
 
 //===================================================================//
 
-_TEX_FUNC(coth,
-    _PRINT("\\coth");
-    _IN_PARENT(_TEX(l));
+_PLOT_FUNC(coth,
+    _IN_PARENT(
+        _PRINT("1/tanh");
+        _IN_PARENT(_PLOT(l));
+              );
 )
 
 //===================================================================//
 
-_TEX_FUNC(arcsinh,
-    _PRINT("\\arcsinh");
-    _IN_PARENT(_TEX(l));
+_PLOT_FUNC(arcsinh,
+    _PRINT("asinh");
+    _IN_PARENT(_PLOT(l));
 )
 
 //===================================================================//
 
-_TEX_FUNC(arccosh,
-    _PRINT("\\arccosh");
-    _IN_PARENT(_TEX(l));
+_PLOT_FUNC(arccosh,
+    _PRINT("acosh");
+    _IN_PARENT(_PLOT(l));
 )
 
 //===================================================================//
 
-_TEX_FUNC(arctanh,
-    _PRINT("\\arctanh");
-    _IN_PARENT(_TEX(l));
+_PLOT_FUNC(arctanh,
+    _PRINT("atanh");
+    _IN_PARENT(_PLOT(l));
 )
 
 //===================================================================//
 
-_TEX_FUNC(arccoth,
-    _PRINT("\\arccoth");
-    _IN_PARENT(_TEX(l));
+_PLOT_FUNC(arccoth,
+    _IN_PARENT(
+        _PRINT("0.5 * (log(1 + 1 / (");
+        _IN_PARENT(_PLOT(l));
+        _PRINT(") - log(1 - 1 / (");
+        _IN_PARENT(_PLOT(l));
+        _PRINT("))))");
+              );
 )
 
 //———————————————————————————————————————————————————————————————————//
 
-#undef _TEX_FUNC_INTRO
-#undef _TEX_FUNC
+#undef _PLOT_FUNC_INTRO
+#undef _PLOT_FUNC
 #undef _PRINT
 #undef _PUTC
 #undef _IN_BRACES
