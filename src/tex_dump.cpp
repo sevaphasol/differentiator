@@ -23,10 +23,6 @@ static int           count_number_of_strings (char* text);
 static diff_status_t get_file_size           (FILE* fp,
                                               size_t* size);
 
-static diff_status_t print_graphic           (diff_context_t* ctx,
-                                              node_t* node,
-                                              const char* file_name);
-
 //———————————————————————————————————————————————————————————————————//
 
 #define _PRINT(...) fprintf(ctx->dump_info.tex_file, ##__VA_ARGS__)

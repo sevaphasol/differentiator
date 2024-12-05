@@ -38,6 +38,7 @@ enum diff_status_t
     DIFF_CALC_IN_POINT_ERROR        = 13,
     DIFF_TOO_LONG_EXPRESSION_ERROR  = 14,
     DIFF_COUNT_N_VARS_ERROR         = 15,
+    DIFF_CREATE_TAYLOR_TREE_ERROR   = 16,
 };
 
 //———————————————————————————————————————————————————————————————————//

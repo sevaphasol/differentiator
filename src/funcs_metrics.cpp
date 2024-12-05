@@ -2,6 +2,7 @@
 #include "dsl.h"
 #include "operations.h"
 #include "tex_dump.h"
+#include "graph_dump.h"
 
 //———————————————————————————————————————————————————————————————————//
 
@@ -77,7 +78,7 @@ int metric_##_func_name(diff_context_t* ctx, node_t* node)            \
 //———————————————————————————————————————————————————————————————————//
 
 _METRIC_FUNC(num,
-    _RESULT = ((int) node->val.num) / 10 + 1;
+    _RESULT = 1; //TODO count number of digits
 )
 
 //===================================================================//

@@ -15,6 +15,8 @@ const char* const PlotFile        = "plots.txt";
 const int ExpressionLengthBufSize = 400;
 const int PngCreateCommandBufSize = 600;
 
+const int TaylorPngFileNameSize   = 100;
+
 //———————————————————————————————————————————————————————————————————//
 
 diff_status_t plot_dump (diff_context_t* ctx,

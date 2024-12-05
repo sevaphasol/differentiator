@@ -49,6 +49,11 @@ diff_status_t print_tex                  (diff_context_t* ctx, const char* str, 
 diff_status_t renames_encrypt            (diff_context_t* ctx, node_t* node);
 diff_status_t read_phrases               (dump_info_t* dump_info, FILE* fp);
 
+diff_status_t print_graphic              (diff_context_t* ctx,
+                                          node_t* node,
+                                          const char* file_name);
+
+
 //———————————————————————————————————————————————————————————————————//
 
 #endif // TEX_DUMP_H__

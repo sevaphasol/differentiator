@@ -33,8 +33,8 @@ diff_status_t plot_dump(diff_context_t* ctx,
     //-------------------------------------------------------------------//
 
     _PLOT(tree);
-
     char expr[ExpressionLengthBufSize];
+
     read_expression_in_string(ctx, expr);
 
     make_png_file(expr, png_file_name);
@@ -63,10 +63,10 @@ diff_status_t make_png_file(const char* expr,
              " set multiplot;"
              " set xzeroaxis;"
              " set xtics axis;"
-             " set xrange [-1:1];"
+             " set xrange [-15:15];"
              " set yzeroaxis;"
              " set ytics axis;"
-             " set yrange [-1:1];"
+             " set yrange [-15:15];"
              " set border 0;"
              " plot %s\"", png_file_name, expr);
 

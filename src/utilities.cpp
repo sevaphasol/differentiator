@@ -33,6 +33,12 @@ static diff_status_t count_node             (node_t* node,
 
 static diff_status_t try_calc_opr           (node_t* tree);
 
+static diff_status_t print_taylor_graphics  (diff_context_t* ctx,
+                                             node_t* root,
+                                             node_t* taylor_tree,
+                                             int n,
+                                             node_t** derivatives);
+
 //———————————————————————————————————————————————————————————————————//
 
 diff_status_t derivative(diff_context_t* ctx, node_t* root)
@@ -225,12 +231,7 @@ node_t* copy_tree(diff_context_t* ctx, node_t* root)
     node_t* node = node_ctor(node_allocator,
                              root->arg_type,
                              root->val,
-                             { root->func_ptrs.calc_func,
-                               root->func_ptrs.diff_func,
-                               root->func_ptrs.tex_func,
-                               root->func_ptrs.simplify_func,
-                               root->func_ptrs.metric_func,
-                               root->func_ptrs.plot_func },
+                             root->func_ptrs,
                              root->left,
                              root->right);
 
@@ -416,13 +417,12 @@ diff_status_t get_derivative_in_point(diff_context_t* ctx,
 
     derivatives[n_memb] = *expression;
 
-    // _METRIC(derivatives[n_memb]);
+    _METRIC(derivatives[n_memb]);
     _TEX(derivatives[n_memb]);
 
-    // renames_encrypt(ctx, node);
-    // renames_encrypt(ctx, derivatives[n_memb]);
-
     print_tex(ctx, "\\end{equation}");
+
+    renames_encrypt(ctx, derivatives[n_memb]);
 
     //-------------------------------------------------------------------//
 
@@ -550,8 +550,16 @@ node_t* create_taylor_tree(diff_context_t* ctx,
 
     for (int i = 1; i <= n; i++)
     {
+        num_t val = calc_in_point(derivatives[i], point);
+
+        if (isnan(val))
+        {
+            fprintf(stderr, "This function does not decomposable\n");
+            return nullptr;
+        }
+
         taylor_tree = _ADD(_COPY(taylor_tree),
-                           _DIV(_MUL(_NUM(calc_in_point(derivatives[i], point)),
+                           _DIV(_MUL(_NUM(val),
                                      _POW(_VAR(X), _NUM((num_t) i))),
                                 _NUM((num_t) factorial(i))));
     }
@@ -579,9 +587,9 @@ diff_status_t taylor(diff_context_t* ctx, node_t* root, const int n, num_t point
 
     node_t* taylor_tree = create_taylor_tree(ctx, root, n, derivatives, point);
 
-    ASSERT(taylor_tree);
+    VERIFY(!taylor_tree, return DIFF_CREATE_TAYLOR_TREE_ERROR);
 
-    print_tex(ctx, "\\centered{Итоговая формула разложения по Тейлору}\n");
+    print_tex(ctx, "\\center{Итоговая формула разложения по Тейлору}\n");
     print_tex(ctx, "\\begin{equation}"
                    "f(x) = ");
 
@@ -590,6 +598,64 @@ diff_status_t taylor(diff_context_t* ctx, node_t* root, const int n, num_t point
 
     print_tex(ctx, " + \\tilde{o}(x^%d)\n"
                    "\\end{equation}", n);
+
+    renames_encrypt(ctx, taylor_tree);
+
+    //-------------------------------------------------------------------//
+
+    print_taylor_graphics(ctx, root, taylor_tree, n, derivatives);
+
+    //-------------------------------------------------------------------//
+
+    return DIFF_SUCCESS;
+}
+
+//===================================================================//
+
+diff_status_t print_taylor_graphics(diff_context_t* ctx,
+                                    node_t* root,
+                                    node_t* taylor_tree,
+                                    int n,
+                                    node_t** derivatives)
+{
+    ASSERT(ctx);
+    ASSERT(root);
+    ASSERT(derivatives);
+
+    //-------------------------------------------------------------------//
+
+    node_allocator_t* node_allocator = ctx->node_allocator;
+
+    ASSERT(node_allocator);
+
+    //-------------------------------------------------------------------//
+
+    print_tex(ctx, "\\center{График исходной функции}\n");
+    print_graphic(ctx, root,                    "start_func.png");
+
+    print_tex(ctx, "\\center{График разложения по тейлору функции}\n");
+    print_graphic(ctx, taylor_tree,             "taylor_formula.png");
+
+    print_tex(ctx, "\\center{График разницы между исходной функцией"
+                   " и разложением по Тейлору}\n");
+    print_graphic(ctx, _SUB(taylor_tree, root), "delta.png");
+
+    //-------------------------------------------------------------------//
+
+//     char file_name[TaylorPngFileNameSize] = {};
+//     node_t* taylor_formula = nullptr;
+//
+//     for (int i = 1; i < n; i++)
+//     {
+//         print_tex(ctx, "\\center{График разложения по тейлору функции"
+//                        " до до $\\tilde{o}(x^%d)$}\n", i);
+//
+//         taylor_formula = create_taylor_tree(ctx, derivatives[i], i, derivatives, 0);
+//
+//         snprintf(file_name, TaylorPngFileNameSize, "order_%d.png", i);
+//
+//         print_graphic(ctx, _NUM(1), file_name);
+//     }
 
     //-------------------------------------------------------------------//
 
